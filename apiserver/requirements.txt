@@ -1,0 +1,10 @@
+flask
+flask_jwt
+flask_migrate
+flask_restful
+flask_script
+marshmallow
+pymysql
+pytest
+sqlalchemy
+werkzeug
