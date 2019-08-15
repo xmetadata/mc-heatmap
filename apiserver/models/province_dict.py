@@ -8,11 +8,11 @@ class ProvinceModel(db.Model, CRUD):
     
     uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '省索引')
     privince_name = db.Column(db.String(128), comment = '省名称')
-    privince_type = db.Column(dh.String(32), default = "西北", comment = '省所属区域')
+    privince_type = db.Column(db.String(32), default = "西北", comment = '省所属区域')
 
-    def __init__(self, privince_name):
-        self.privince_name = privince_name
-        self.privince_type = privince_type
+    def __init__(self, province_name, province_type = "西北"):
+        self.privince_name = province_name
+        self.privince_type = province_type
 
     @classmethod
     def GetAllInfo(cls):
@@ -20,5 +20,5 @@ class ProvinceModel(db.Model, CRUD):
 
 
 class ProvinceSchema(Schema):
-    uuid = fields.String(required = True)
-    privince_name = fields.String(required = True)
+    uuid = fields.String()
+    privince_name = fields.String()

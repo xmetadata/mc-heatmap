@@ -17,7 +17,7 @@ class DistrictModel(db.Model, CRUD):
 
     def __init__(self, district_name, district_range, district_type, city):
         self.district_name = district_name
-        self.district_range = self.district_range
+        self.district_range = district_range
         self.district_type = district_type
         self.city = city
 
@@ -26,12 +26,12 @@ class DistrictModel(db.Model, CRUD):
         return cls.query.filter_by(city_uuid = uuid).all()
 
     @classmethod
-    def GetAllInfo():
+    def GetAllInfo(cls):
         return cls.query.all()
 
 class DistrictSchema(Schema):
-    uuid = fields.String(required = True)
-    district_name = db.String(required = True)
-    district_range = db.String(required = True)
-    district_type = db.Integer(required = True);
+    uuid = fields.String()
+    district_name = db.String()
+    district_range = db.String()
+    district_type = db.Integer()
     city = fields.Nested(CitySchema)

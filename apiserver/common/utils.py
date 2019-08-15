@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from uuid import uuid1
+import json
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -18,6 +19,12 @@ class CRUD():
     def delete(self, resource):
         db.session.delete(resource)
         db.session.commit()
+
+def StandardResponse(code = 200, errcode = 0, errmsg = '', data = None):
+    instance = {'errcode': errcode, 'errmsg': errmsg, 'data': ''}
+    if errcode == 0 and data:
+        instance['data'] = data
+    return json.dumps(instance), code
 
 
 def pretty_response(code, data=None):

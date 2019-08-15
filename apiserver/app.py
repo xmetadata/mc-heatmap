@@ -7,34 +7,30 @@ from flask_jwt import JWT
 from flask_restful import Api
 
 from common.utils import db
-from models.users import UsersModel
 from resources.options import Options, OptionsList
 from resources.users import Users, UsersList
-
+from models.users import UsersModel
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
 db.init_app(app)
+app.config['SECRET_KEY'] = 'mch_heat_map'
 
-
-def authenticate(username, password):
+def authenticate(cls, username, password):
     user = UsersModel.find_by_username(username)
     return user if user and user.confirm_password(password) else None
 
-
-def identity(payload):
+def identity(cls, payload):
     id = payload['identity']
     return UsersModel.find_by_id(id)
-
 
 jwt = JWT(app, authenticate, identity)
 
 api = Api(app)
-api.add_resource(Options, '/apiserver/v1.0/options/<string:uuid>')
-api.add_resource(OptionsList, '/apiserver/v1.0/options')
-api.add_resource(Users, '/apiserver/v1.0/users/<string:uuid>')
-api.add_resource(UsersList, '/apiserver/v1.0/users')
-
+#api.add_resource(Options, '/apiserver/v1.0/options/<string:uuid>')
+#api.add_resource(OptionsList, '/apiserver/v1.0/options')
+#api.add_resource(UsersList, '/apiserver/v1.0/users')
+api.add_resource(Users, '/apiserver/v1.0/register')
 
 if __name__ == '__main__':
     logpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log')

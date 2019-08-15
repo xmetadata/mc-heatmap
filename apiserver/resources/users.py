@@ -7,15 +7,15 @@ from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from common.utils import pretty_response
+from common.utils import StandardResponse
 from models.users import UsersModel, UsersSchema
-
 
 class UsersList(Resource):
     @jwt_required()
     def get(self):
         """ Query all instances """
         if current_identity.roles not in ['super']:
-            return pretty_response(403)
+            return StandardResponse(404, 1, '非超级用户, 无权限')
         users_list = UsersModel.query.all()
         users_dump, errors = UsersSchema(many=True).dump(users_list)
         return pretty_response(200, users_dump)
@@ -53,24 +53,35 @@ class UsersList(Resource):
 class Users(Resource):
     @jwt_required()
     def get(self, uuid):
-        """ Query specific instance """
+        #search interface
         if current_identity.roless not in ['super'] and \
             uuid != current_identity.id:
-            return pretty_response(403)
-        users_instance = UsersModel.query.get_or_404(uuid)
-        users_dump, errors = UsersSchema().dump(users_instance)
-        return pretty_response(200, users_dump)
+            return StandardResponse(403, 1, '非管理员, 无权限')
+        user_instance = UsersModel.query.get_or_404(uuid)
+        user_dump, errors = UsersSchema().dump(user_instance)
+        if errors:
+            return StandardResponse(404, 1, '不能找到指定用户')
+        return StandardResponse(200, 0, data = user_dump)
 
-    def post(self, uuid):
-        """ Update specific instance """
-        return pretty_response(405)
+    def post(self):
+        #register interface
+        user_name = request.form['username']
+        user_pass = request.form['password']
+        if not user_name or not user_pass:
+            return StandardResponse(406, 1, '无效的用户名或密码')
+        user = UsersModel(user_name, user_pass)
+        try:
+            user.add(user)
+        except Exception, e:
+            return StandardResponse(412, 1, e.message)
+        return StandardResponse(200)
 
     @jwt_required()
     def put(self, uuid):
-        """ Update specific instance """
+        #update interface
         if current_identity.roless not in ['super'] and \
             uuid != current_identity.id:
-            return pretty_response(403)
+            return StandardResponse(403, 1, '非管理员, 无权限')
         users_instance = UsersModel.query.get_or_404(uuid)
         try:
             jsondata = request.get_json()
@@ -90,7 +101,7 @@ class Users(Resource):
 
     @jwt_required()
     def delete(self, uuid):
-        """ Delete specific instance """
+        #delete interface
         if current_identity.roles not in ['super']:
             return pretty_response(403)
         users_instance = UsersModel.query.get_or_404(uuid)
