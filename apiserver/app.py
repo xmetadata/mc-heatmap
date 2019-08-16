@@ -1,36 +1,28 @@
 # -*- coding: UTF-8 -*-
-import logging
 import os
+import logging
 
 from flask import Flask
 from flask_jwt import JWT
 from flask_restful import Api
 
 from common.utils import db
-from resources.options import Options, OptionsList
-from resources.users import Users, UsersList
-from models.users import UsersModel
+from resources.users import authen_callback, identity_callback, response_callback, payload_callback
+from resources.users import UserManager, UserRegister
 
 app = Flask(__name__)
 app.config.from_object('config.DevelopmentConfig')
 db.init_app(app)
 app.config['SECRET_KEY'] = 'mch_heat_map'
+app.config['JWT_AUTH_URL_RULE'] = '/apiserver/auth'
 
-def authenticate(cls, username, password):
-    user = UsersModel.find_by_username(username)
-    return user if user and user.confirm_password(password) else None
-
-def identity(cls, payload):
-    id = payload['identity']
-    return UsersModel.find_by_id(id)
-
-jwt = JWT(app, authenticate, identity)
+jwt = JWT(app, authen_callback, identity_callback)
+jwt.auth_response_handler(response_callback)
+jwt.jwt_payload_handler(payload_callback)
 
 api = Api(app)
-#api.add_resource(Options, '/apiserver/v1.0/options/<string:uuid>')
-#api.add_resource(OptionsList, '/apiserver/v1.0/options')
-#api.add_resource(UsersList, '/apiserver/v1.0/users')
-api.add_resource(Users, '/apiserver/v1.0/register')
+api.add_resource(UserManager, '/apiserver/usermanager/<string:uuid>')
+api.add_resource(UserRegister, '/apiserver/userigister')
 
 if __name__ == '__main__':
     logpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log')

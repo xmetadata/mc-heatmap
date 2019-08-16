@@ -8,6 +8,13 @@ from models.users import UsersModel
 from models.province_dict import ProvinceModel
 from models.city_dict import CityModel
 from models.district_dict import DistrictModel
+from models.housing_type_dict import HousingTypeModel
+from models.premises_type_dict import PremisesTypeModel
+from models.total_area_dict import TotalAreaModel
+from models.unit_price_dict import UnitPriceMode
+from models.total_price_dict import TotalPriceModel
+#from models.project_detail_data import ProjectDetailModel
+from models.project_infomation_data import ProjectInfomationModel
 
 migrate = Migrate(app, db)
 

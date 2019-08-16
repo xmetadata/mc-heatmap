@@ -8,7 +8,7 @@ from common.utils import CRUD, db, get_uuid
 
 
 class UsersModel(db.Model, CRUD):
-    __tablename__ = "users"
+    __tablename__ = "t_users_data"
 
     id = db.Column(db.String(32), default=get_uuid, primary_key=True)
     username = db.Column(db.String(128))

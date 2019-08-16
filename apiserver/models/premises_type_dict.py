@@ -22,4 +22,4 @@ class PremisesTypeModel(db.Model, CRUD):
 class PremisesTypeSchema(Schema):
     uuid = fields.String(required = True)
     premisestype_name = fields.String(required = True)
-    premisestype_type = fields.Integer, required = True)
+    premisestype_type = fields.Integer( required = True)
