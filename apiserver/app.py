@@ -24,12 +24,13 @@ api = Api(app)
 api.add_resource(UserManager, '/apiserver/usermanager/<string:uuid>')
 api.add_resource(UserRegister, '/apiserver/userigister')
 
+
 if __name__ == '__main__':
     logpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log')
     if not os.path.exists(logpath):
         os.makedirs(logpath)
     handler = logging.FileHandler(os.path.join(logpath, 'apiserver.log'),
-                                  encoding='utf-8')
+                                   encoding='utf-8')
     handler.setLevel(logging.DEBUG)
     logging_format = logging.Formatter(
         '%(asctime)s %(levelname)s %(filename)s %(lineno)s %(message)s')

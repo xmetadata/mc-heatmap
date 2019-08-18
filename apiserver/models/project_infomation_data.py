@@ -18,7 +18,7 @@ class ProjectInfomationModel(db.Model, CRUD):
     pro_total_area    = db.Column(db.Float, comment = '楼盘上市总面积')
     pro_area_sold     = db.Column(db.Float, comment = '楼盘已售面积')
     pro_area_selling  = db.Column(db.Float, comment = '楼盘在售面积')
-    pro_tatol_num     = db.Column(db.Integer, comment = '楼盘上市总套数')
+    pro_total_num     = db.Column(db.Integer, comment = '楼盘上市总套数')
     pro_sold_num      = db.Column(db.Integer, comment = '楼盘已售套数')
     pro_selling_num   = db.Column(db.Integer, comment = '楼盘在售套数')
 
@@ -28,4 +28,25 @@ class ProjectInfomationModel(db.Model, CRUD):
     city              = db.relationship('CityModel', backref = db.backref('houses'), lazy = 'dynamic')
     district_uuid     = db.Column(db.String(32), db.ForeignKey('t_district_dict.uuid'), comment = '外键, 关联城市行政区')
     district          = db.relationship('DistrictModel', backref = db.backref('houses'), lazy = 'dynamic')
-    
+
+    @classmethod
+    def GetInfoAll(cls):
+        return cls.query.all()
+
+class ProjectInfomationSchema(Schema):
+    uuid = fields.String()
+    statistic_date = fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
+    project_name = fields.String()
+    pro_lng = fields.Float()
+    pro_lat = fields.Float()
+    pro_price = db.Float()
+    pro_total_area = db.Float()
+    pro_area_sold = db.Float()
+    pro_area_selling = db.Float()
+    pro_total_num = db.Integer()
+    pro_sold_num = db.Integer()
+    pro_selling_num = db.Integer()
+
+    province = fields.Nested(ProvinceSchema)
+    city = fields.Nested(CitySchema)
+    district = fields.Nested(DistrictSchema)
