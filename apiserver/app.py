@@ -11,7 +11,7 @@ from resources.users import authen_callback, identity_callback, response_callbac
 from resources.users import UserManager, UserRegister
 
 app = Flask(__name__)
-app.config.from_object('config.DevelopmentConfig')
+app.config.from_object('config.ProductionConfig')
 db.init_app(app)
 app.config['SECRET_KEY'] = 'mch_heat_map'
 app.config['JWT_AUTH_URL_RULE'] = '/apiserver/auth'

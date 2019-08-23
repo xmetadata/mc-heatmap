@@ -72,7 +72,7 @@ class TaskMgr:
 
     def __TaskLoad(self):
         for key, value in TASK_REGISTER:
-            self.task_list__[key] = value
+            self.task_list__[key] = Task(value)
             self.task_count__ += 1
 
     def __TasksRun(self):
