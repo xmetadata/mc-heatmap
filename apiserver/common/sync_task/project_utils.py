@@ -3,8 +3,16 @@ import datetime
 
 import MySQLdb
 
-from config import DB, logger
+from task_config import DB
 
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    filename='synctask.log',
+                    filemode='a',
+                    format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
+                    )
+logger = logging.getLogger('synctask')
 
 def db_query(sqli, fetchone=False):
     # 打开数据库连接
