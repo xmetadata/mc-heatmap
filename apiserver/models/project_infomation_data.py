@@ -28,11 +28,11 @@ class ProjectInfomationModel(db.Model, CRUD):
     pro_lat           = db.Column(db.Float,       comment = '楼盘纬度')
     pro_sale_date     = db.Column(db.DateTime,    comment = '楼盘开始售卖日期')
 
-    pro_province_uuid = db.Column(db.String(32), db.ForeignKey('t_province_dict'),     comment = '外键，关联楼盘所属省份')
+    pro_province_uuid = db.Column(db.String(32), db.ForeignKey('t_province_dict.province_uuid'),     comment = '外键，关联楼盘所属省份')
     pro_province      = db.relationship('ProvinceModel', backref = db.backref('project'),    lazy = 'dynamic')
-    pro_city_uuid     = db.Column(db.String(32), db.ForeignKey('t_city_dict'),         comment = '外键，关联楼盘所属城市')
+    pro_city_uuid     = db.Column(db.String(32), db.ForeignKey('t_city_dict.city_uuid'),         comment = '外键，关联楼盘所属城市')
     pro_city          = db.relationship('CityModel', backref = db.backref('project'),        lazy = 'dynamic')
-    pro_district_uuid = db.Column(db.String(32), db.ForeignKey('t_district_dict'),     comment = '外键，关联楼盘所属区域')
+    pro_district_uuid = db.Column(db.String(32), db.ForeignKey('t_district_dict.district_uuid'),     comment = '外键，关联楼盘所属区域')
     pro_district      = db.relationship('DistrictModel', backref = db.backref('project'),    lazy = 'dynamic')
 
     #获取所有楼盘

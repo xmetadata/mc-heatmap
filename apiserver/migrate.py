@@ -9,7 +9,7 @@ from models.province_dict import ProvinceModel
 from models.city_dict import CityModel
 from models.district_dict import DistrictModel
 from models.housing_type_dict import HousingTypeModel
-from models.premises_type_dict import PremisesTypeModel
+from models.project_property import PropertyModel
 from models.total_area_dict import TotalAreaModel
 from models.unit_price_dict import UnitPriceMode
 from models.total_price_dict import TotalPriceModel
