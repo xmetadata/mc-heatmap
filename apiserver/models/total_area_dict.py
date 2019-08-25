@@ -9,12 +9,12 @@ class TotalAreaModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '总面积索引')
-    area_start = db.Column(db.Integer, comment = '总面积范围起始')
-    area_end = db.Column(db.Integer, comment = '总面积范围结束')
-    area_type = db.Column(db.Integer, comment = '总面积类型, 0: 内置, 1: 自定义')
+    uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'总面积索引')
+    area_start = db.Column(db.Integer, comment = u'总面积范围起始')
+    area_end = db.Column(db.Integer, comment = u'总面积范围结束')
+    area_type = db.Column(db.Integer, comment = u'总面积类型, 0: 内置, 1: 自定义')
 
-    def __init__(self, area_start, area_end, price_type):
+    def __init__(self, area_start, area_end, area_type):
         self.area_start = area_start
         self.area_end = area_end
         self.area_type = area_type

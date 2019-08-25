@@ -10,11 +10,11 @@ class CityModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    city_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '市索引')
-    city_name = db.Column(db.String(32), comment = '市名称')
-    city_type = db.Column(db.String(128), default = "地级市", comment = '市类型')
+    city_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'市索引')
+    city_name = db.Column(db.String(32), comment = u'市名称')
+    city_type = db.Column(db.String(128), default = u"地级市", comment = u'市类型')
 
-    province_uuid = db.Column(db.String(32), db.ForeignKey('t_province_dict.province_uuid'), comment = '外键， 关联省字典表')
+    province_uuid = db.Column(db.String(32), db.ForeignKey('t_province_dict.province_uuid'), comment = u'外键， 关联省字典表')
     province = db.relationship('ProvinceModel', backref = db.backref('citys', lazy = 'dynamic'))
 
     def __init__(self, city_name, province):

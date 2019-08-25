@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import datetime
+from uuid import uuid1
 
 import MySQLdb
 
@@ -13,6 +14,9 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
                     )
 logger = logging.getLogger('synctask')
+
+def get_uuid():
+    return uuid1().hex
 
 def db_query(sqli, fetchone=False):
     # 打开数据库连接
@@ -64,7 +68,7 @@ def db_exec(sqli, executemany=None):
         # 提交到数据库执行
         db.commit()
     except Exception as e:
-        logger.error(e)
+        logger.error(e.message)
         logger.error(sqli)
         logger.error(executemany)
         # 发生错误时回滚

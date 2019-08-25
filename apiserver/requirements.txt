@@ -8,3 +8,5 @@ pymysql
 pytest
 sqlalchemy
 werkzeug
+requests
+gevent

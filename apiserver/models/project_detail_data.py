@@ -7,7 +7,7 @@ class ProjectDetailModel(db.Model, CRUD):
     __table_args__ = {
         'mysql_charset': 'utf8'
     }
-    detail_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '楼盘详情索引')
+    detail_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'楼盘详情索引')
     pass
 
 

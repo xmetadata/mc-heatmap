@@ -5,6 +5,7 @@ from flask_migrate import Migrate, MigrateCommand
 from flask_script import Manager
 
 from models.users import UsersModel
+from models.options import OptionsModel
 from models.province_dict import ProvinceModel
 from models.city_dict import CityModel
 from models.district_dict import DistrictModel

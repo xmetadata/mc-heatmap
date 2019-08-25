@@ -6,7 +6,7 @@ from marshmallow import Schema, fields, post_load
 
 
 class OptionsModel(db.Model, CRUD):
-    __tablename__ = "options"
+    __tablename__ = "t_options_data"
     __table_args__ = {
         'mysql_charset': 'utf8'
     }

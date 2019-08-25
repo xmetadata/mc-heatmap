@@ -10,12 +10,12 @@ class DistrictModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    district_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '区域索引')
-    district_name = db.Column(db.String(32), comment = '区域名称')
-    district_range = db.Column(db.String(128), comment = '区域范围, 用于表示区域范围')
-    district_type = db.Column(db.Integer, comment = '区域类型, 0: 内置, 1: 自定义')
+    district_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'区域索引')
+    district_name = db.Column(db.String(32), comment = u'区域名称')
+    district_range = db.Column(db.String(128), comment = u'区域范围, 用于表示区域范围')
+    district_type = db.Column(db.Integer, comment = u'区域类型, 0: 内置, 1: 自定义')
 
-    city_uuid = db.Column(db.String(32), db.ForeignKey('t_city_dict.city_uuid'), comment = '外键，区域所属市索引')
+    city_uuid = db.Column(db.String(32), db.ForeignKey('t_city_dict.city_uuid'), comment = u'外键，区域所属市索引')
     city = db.relationship('CityModel', backref = db.backref('districts', lazy = 'dynamic'))
 
     def __init__(self, district_name, district_range, district_type, city):

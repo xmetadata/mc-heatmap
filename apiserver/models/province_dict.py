@@ -9,11 +9,11 @@ class ProvinceModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    province_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '省索引')
-    province_name = db.Column(db.String(128), comment = '省名称')
-    province_type = db.Column(db.String(32), default = "西北", comment = '省所属区域')
+    province_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'省索引')
+    province_name = db.Column(db.String(128), comment = u'省名称')
+    province_type = db.Column(db.String(32), default = u'西北', comment = u'省所属区域')
 
-    def __init__(self, province_name, province_type = "西北"):
+    def __init__(self, province_name, province_type = u'西北'):
         self.province_name = province_name
         self.province_type = province_type
 

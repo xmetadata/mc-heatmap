@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 DB = {
-    'host': '47.103.36.82',
+    'host': '106.14.174.55',
     'username': 'root',
     'password': 'Aa888888',
     'database': 'heatmap',
@@ -13,7 +13,7 @@ STATGAP = -10
 CURRENT_PROJECT = {}
 
 MODULES = [
-    'ProjectSync'
+    'sync_project'
 ]
 
 TASK_REGISTER = {
@@ -41,7 +41,7 @@ PROJECT_SYNC = {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Origin': 'https://creis.fang.com',
             'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36',
-            'Cookie': '',
+            'Cookie': ''
         },
     'url_payload': {
             "sTypeName": "",
