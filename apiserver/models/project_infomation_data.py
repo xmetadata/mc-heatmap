@@ -7,46 +7,75 @@ from city_dict import CitySchema
 from district_dict import DistrictSchema
 
 class ProjectInfomationModel(db.Model, CRUD):
-    __tablename__ = "t_projectinfo_data"
+    __tablename__ = "t_project_info_data"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
-    uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '楼盘索引')
-    statistic_date    = db.Column(db.DateTime, comment = '数据统计日期')
-    project_name      = db.Column(db.String(128), comment = '楼盘名称')
-    pro_lng           = db.Column(db.Float, comment = '楼盘所在经度')
-    pro_lat           = db.Column(db.Float, comment = '楼盘所在纬度')
-    pro_price         = db.Column(db.Float, comment = '楼盘均价')
-    pro_total_area    = db.Column(db.Float, comment = '楼盘上市总面积')
-    pro_area_sold     = db.Column(db.Float, comment = '楼盘已售面积')
-    pro_area_selling  = db.Column(db.Float, comment = '楼盘在售面积')
-    pro_total_num     = db.Column(db.Integer, comment = '楼盘上市总套数')
-    pro_sold_num      = db.Column(db.Integer, comment = '楼盘已售套数')
-    pro_selling_num   = db.Column(db.Integer, comment = '楼盘在售套数')
+    pro_uuid          = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '楼盘索引')
+    pro_name          = db.Column(db.String(128), comment = '楼盘名称')
+    pro_address       = db.Column(db.String(128), comment = '楼盘地址')
+    pro_company       = db.Column(db.String(128), comment = '楼盘开发商')
+    pro_ave_price     = db.Column(db.Float,       comment = '楼盘平均价格')
+    pro_sale_card     = db.Column(db.String(64),  comment = '楼盘预售证')
+    pro_total_door    = db.Column(db.Integer,     comment = '楼盘总套数')
+    pro_sold_door     = db.Column(db.Integer,     comment = '楼盘已售套数')
+    pro_selling_door  = db.Column(db.Integer,     comment = '楼盘在售套数')
+    pro_total_area    = db.Column(db.Float,       comment = '楼盘总面积')
+    pro_sold_area     = db.Column(db.Float,       comment = '楼盘已售面积')
+    pro_selling_area  = db.Column(db.Float,       comment = '楼盘在售面积')
+    pro_lng           = db.Column(db.Float,       comment = '楼盘经度')
+    pro_lat           = db.Column(db.Float,       comment = '楼盘纬度')
+    pro_sale_date     = db.Column(db.DateTime,    comment = '楼盘开始售卖日期')
 
-    province_uuid     = db.Column(db.String(32), db.ForeignKey('t_province_dict.uuid'), comment = '外键, 关联省份')
-    province          = db.relationship('ProvinceModel', backref = db.backref('houses'), lazy = 'dynamic')
-    city_uuid         = db.Column(db.String(32), db.ForeignKey('t_city_dict.uuid'), comment = '外键, 关联城市')
-    city              = db.relationship('CityModel', backref = db.backref('houses'), lazy = 'dynamic')
-    district_uuid     = db.Column(db.String(32), db.ForeignKey('t_district_dict.uuid'), comment = '外键, 关联城市行政区')
-    district          = db.relationship('DistrictModel', backref = db.backref('houses'), lazy = 'dynamic')
+    pro_province_uuid = db.Column(db.String(32), db.ForeignKey('t_province_dict'),     comment = '外键，关联楼盘所属省份')
+    pro_province      = db.relationship('ProvinceModel', backref = db.backref('project'),    lazy = 'dynamic')
+    pro_city_uuid     = db.Column(db.String(32), db.ForeignKey('t_city_dict'),         comment = '外键，关联楼盘所属城市')
+    pro_city          = db.relationship('CityModel', backref = db.backref('project'),        lazy = 'dynamic')
+    pro_district_uuid = db.Column(db.String(32), db.ForeignKey('t_district_dict'),     comment = '外键，关联楼盘所属区域')
+    pro_district      = db.relationship('DistrictModel', backref = db.backref('project'),    lazy = 'dynamic')
 
+    #获取所有楼盘
     @classmethod
     def GetInfoAll(cls):
         return cls.query.all()
 
-class ProjectInfomationSchema(Schema):
-    uuid = fields.String()
-    statistic_date = fields.DateTime(format='%Y-%m-%d %H:%M:%S', dump_only=True)
-    project_name = fields.String()
-    pro_lng = fields.Float()
-    pro_lat = fields.Float()
-    pro_price = db.Float()
-    pro_total_area = db.Float()
-    pro_area_sold = db.Float()
-    pro_area_selling = db.Float()
-    pro_total_num = db.Integer()
-    pro_sold_num = db.Integer()
-    pro_selling_num = db.Integer()
+    #根据省份获取楼盘
+    @classmethod
+    def GetInfoByProvince(cls):
+        pass
 
-    province = fields.Nested(ProvinceSchema)
-    city = fields.Nested(CitySchema)
-    district = fields.Nested(DistrictSchema)
+    #根据城市获取楼盘
+    @classmethod
+    def GetInfoByCity(cls):
+        pass
+
+    #根据区域获取楼盘
+    @classmethod
+    def GetInfoByDistrict(cls):
+        pass
+
+    #根据平均价获取楼盘
+    @classmethod
+    def GetInfoByAvePrice(cls, start, end):
+        pass
+
+class ProjectInfomationSchema(Schema):
+    pro_uuid            = fields.String()
+    pro_name            = fields.String()
+    pro_address         = fields.String()
+    pro_company         = fields.String()
+    pro_ave_price       = fields.Float()
+    pro_sale_card       = fields.String()
+    pro_total_door      = fields.Integer()
+    pro_sold_door       = fields.Integer()
+    pro_selling_door    = fields.Integer()
+    pro_total_area      = fields.Float()
+    pro_sold_area       = fields.Float()
+    pro_selling_area    = fields.Float()
+    pro_lng             = fields.Float()
+    pro_lat             = fields.Float()
+    pro_sale_date       = fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    pro_province        = fields.Nested(ProvinceSchema)
+    pro_city            = fields.Nested(CitySchema)
+    pro_district        = fields.Nested(DistrictSchema)

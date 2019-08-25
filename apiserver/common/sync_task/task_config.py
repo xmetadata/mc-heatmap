@@ -32,7 +32,9 @@ TASK_REGISTER = {
 
 PROJECT_SYNC = {
     'statistic_type': [
-        '成交情况'
+        '成交情况',
+        '可售情况',
+        '上市情况'
     ],
     'statistic_url': 'https://creis.fang.com/city/PropertyStatistics/DetailsAjax',
     'url_header': {

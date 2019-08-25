@@ -7,6 +7,9 @@ from marshmallow import Schema, fields, post_load
 
 class OptionsModel(db.Model, CRUD):
     __tablename__ = "options"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
     uuid = db.Column(db.String(32), default=get_uuid, primary_key=True)
     opt_key = db.Column(db.String(256), default=None, unique=True)

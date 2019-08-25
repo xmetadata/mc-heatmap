@@ -6,8 +6,11 @@ from province_dict import ProvinceSchema
 
 class CityModel(db.Model, CRUD):
     __tablename__ = "t_city_dict"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
-    uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '市索引')
+    city_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '市索引')
     city_name = db.Column(db.String(32), comment = '市名称')
     city_type = db.Column(db.String(128), default = "地级市", comment = '市类型')
 

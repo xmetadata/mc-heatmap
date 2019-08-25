@@ -1,11 +1,15 @@
 # -*- coding: UTF-8 -*-
 import json
+from urllib import urlencode
 from project_utils import logger
 from project_utils import db_query, db_exec
 
 class ProjectSync:
     def __init__(self):
         self.project_list__ = []
+        self.province_map__ = {}
+        self.city_map__     = {}
+        self.district_map__ = {}
 
     def ParseRespon(self, respon):
         respon_objs = self.__ResponSerial(respon)
@@ -23,17 +27,19 @@ class ProjectSync:
         db_exec(final_sql, executemany=True)
 
     def __ParseOneProject(self, project):
-        project_item = "(%s, %s, %s)"\
-                %(project['sPropertyID'], project['sPropertyName'], project['sDistrictName'])
+        project_item = "(%s, %s, %f, %f)"\
+                %(project['sPropertyName'], project['sCompanyName'], project['fRoomPrice'], project['fRoomArea'])
         self.project_list__.append(project_item)
 
     def __GenerateSql(self):
         if len(self.project_list__):
             logger.error("ProjectSync::__GenerateSql: invalid project list.")
             return None
-        sql = "insert into t_projectinfo_data ('uuid', 'project_name', 'district_uuid') values"
+        sql = "insert into t_projectinfo_data ('pro_name', 'pro_company', 'pro_ave_price', 'pro_total_area') values"
         for itr in self.project_list__:
             sql += itr
+            if itr != self.project_list__[-1]:
+                sql += ','
         return sql
 
     def __ResponSerial(self, respon):

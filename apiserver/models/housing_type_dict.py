@@ -5,6 +5,9 @@ from common.utils import CRUD, db, get_uuid
 
 class HousingTypeModel(db.Model, CRUD):
     __tablename__ = "t_housingtype_dict"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
     uuid = db.Column(db.String(32), primary_key = True, comment = '房屋类型索引')
     housetype_name = db.Column(db.String(64), comment = '类型名, example: 两室一厅')

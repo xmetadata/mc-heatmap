@@ -1,13 +1,16 @@
 # -*- coding: UTF-8 -*-
 from marshmallow import Schema, fields, post_load
-
+import json
 from common.utils import CRUD, db, get_uuid
 from city_dict import CitySchema
 
 class DistrictModel(db.Model, CRUD):
     __tablename__ = "t_district_dict"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
-    uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '区域索引')
+    district_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '区域索引')
     district_name = db.Column(db.String(32), comment = '区域名称')
     district_range = db.Column(db.String(128), comment = '区域范围, 用于表示区域范围')
     district_type = db.Column(db.Integer, comment = '区域类型, 0: 内置, 1: 自定义')
@@ -26,8 +29,9 @@ class DistrictModel(db.Model, CRUD):
         return cls.query.filter_by(city_uuid = uuid).all()
 
     @classmethod
-    def GetAllInfo(cls):
-        return cls.query.all()
+    def GetInfo4Dict(cls):
+        result = cls.query.all()
+        return json.dumps(result)
 
 class DistrictSchema(Schema):
     uuid = fields.String()

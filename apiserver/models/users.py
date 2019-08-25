@@ -9,6 +9,9 @@ from common.utils import CRUD, db, get_uuid
 
 class UsersModel(db.Model, CRUD):
     __tablename__ = "t_users_data"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
     id = db.Column(db.String(32), default=get_uuid, primary_key=True)
     username = db.Column(db.String(128))

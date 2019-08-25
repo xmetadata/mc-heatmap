@@ -5,6 +5,9 @@ from common.utils import CRUD, db, get_uuid
 
 class TotalAreaModel(db.Model, CRUD):
     __tablename__ = "t_totalarea_dict"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
     uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '总面积索引')
     area_start = db.Column(db.Integer, comment = '总面积范围起始')

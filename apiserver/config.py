@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import os
 from datetime import timedelta
 
@@ -19,8 +20,7 @@ class ProductionConfig(Config):
 
     # MySQL
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Aa888888@47.103.36.82:3306/heatmap_test'
-
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Aa888888@47.103.36.82:3306/heatmap_test?charset=utf8'
 
 
 class DevelopmentConfig(Config):
@@ -31,4 +31,3 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///%s/data/databases.db' % os.path.dirname(
         os.path.realpath(__file__))
-

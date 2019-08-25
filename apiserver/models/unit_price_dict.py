@@ -5,6 +5,9 @@ from common.utils import CRUD, db, get_uuid
 
 class UnitPriceMode(db.Model, CRUD):
     __tablename__ = "t_unitprice_dict"
+    __table_args__ = {
+        'mysql_charset': 'utf8'
+    }
 
     uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = '单价索引')
     price_start = db.Column(db.Integer, comment = '单价范围开始值')
