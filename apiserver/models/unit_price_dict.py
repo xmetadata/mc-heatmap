@@ -9,7 +9,7 @@ class UnitPriceMode(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'单价索引')
+    uuid = db.Column(db.String(36), default = get_uuid, primary_key = True, comment = u'单价索引')
     price_start = db.Column(db.Integer, comment = u'单价范围开始值')
     price_end   = db.Column(db.Integer, comment = u'单价范围结束值')
     price_type  = db.Column(db.Integer, comment = u'单价类型, 0: 内置, 1:自定义')

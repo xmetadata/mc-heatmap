@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import importlib
 import requests
 import json
@@ -21,50 +22,46 @@ class Task:
     def __GenerateHeader(self):
         cookie = db_query("select opt_value from t_options_data where opt_key='cookie'", fetchone=True)
         if not cookie:
-            logger.error("ProjectSync::GenerateHeader [ " + self.project_name__ + \
+            logger.error("ProjectTask::GenerateHeader [ " + self.project_name__ + \
                          "]: Export valid cookie.")
             return None
         self.config__['url_header']['Cookie'] = cookie[0]
         return self.config__['url_header']
 
-    def __GeneratePayload(self, page):
-        statistic_type = self.config__['statistic_type'][0]
-        payload = self.config__['url_payload']
-        payload['sTypeName'] = statistic_type
-        payload['iPageIndex'] = page
-        return payload
-
-    def ParseProjectLoop(self):
+    def __ParseStastisticType(self, statistic_type):
         cls = self.__GenerateProjectClass()
         if not cls:
-            logger.error("ProjectSync::ParseProjectLoop [ " + self.project_name__ + \
+            logger.error("ProjectTask::ParseProjectLoop [ " + self.project_name__ + \
                          "]: generate " + self.project_name__ + " class unsuccessfully.")
-            return
+            return False
         project_count = 1
-        count_of_one_page = self.config__['url_payload']['iPageSize']
         header = self.__GenerateHeader()
         page_index = 1
-        page_statistic = 0
-        while project_count == 1 or page_index <= int(project_count/int(count_of_one_page)) + page_statistic:
-            payload = self.__GeneratePayload(page_index)
-            try:
-                response = requests.post( self.config__['statistic_url'],
-                             data={'jsonParameters': json.dumps(payload)}, headers=header)
-            except Exception, e:
-                logger.error("ProjectSync::ParseProjectLoop [ " + self.project_name__ + \
-                         "]: request url unsuccessfully, errmsg: " + e.message)
-                return
+        while project_count == 1 or page_index <= project_count:
             project = cls()
-            project_num = project.ParseRespon(response.text)
+            payload = project.GeneratePayload(self.config__, page_index, statistic_type)
+            try:
+                response = requests.post(self.config__['statistic_url'],
+                                         data={'jsonParameters': json.dumps(payload)}, headers=header)
+            except Exception, e:
+                logger.error("ProjectTask::ParseProjectLoop [ " + self.project_name__ + \
+                             "]: request url unsuccessfully, errmsg: " + e.message)
+                return False
+            project_num = project.ParseRespon(response.text, self.config__['url_payload'])
             if project_count == 1:
                 if not project_count:
-                    logger.error("ProjectSync::ParseProjectLoop [ " + self.project_name__ + \
-                             "]: Parse response unsuccessfully.")
-                    return
-                page_statistic = 1 if project_count%int(count_of_one_page) else 0
+                    logger.error("ProjectTask::ParseProjectLoop [ " + self.project_name__ + \
+                                 "]: Parse response unsuccessfully.")
+                    return False
                 project_count = project_num
             page_index += 1
             project.ProcessResult()
+        return True
+
+    def ParseProjectLoop(self):
+        for itr in self.config__['statistic_type']:
+            if not self.__ParseStastisticType(itr):
+                logger.error("ProjectTask::__ParseProjectLoop: parse statistic type [" + itr + "] unsuccessfully.")
 
 class TaskMgr:
     def __init__(self):

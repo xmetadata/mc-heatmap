@@ -9,7 +9,7 @@ class ProvinceModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    province_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'省索引')
+    province_uuid = db.Column(db.String(36), default = get_uuid, primary_key = True, comment = u'省索引')
     province_name = db.Column(db.String(128), comment = u'省名称')
     province_type = db.Column(db.String(32), default = u'西北', comment = u'省所属区域')
 

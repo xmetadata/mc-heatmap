@@ -10,7 +10,7 @@ class CityModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    city_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'市索引')
+    city_uuid = db.Column(db.String(36), default = get_uuid, primary_key = True, comment = u'市索引')
     city_name = db.Column(db.String(32), comment = u'市名称')
     city_type = db.Column(db.String(128), default = u"地级市", comment = u'市类型')
 

@@ -10,8 +10,8 @@ class PropertyModel(db.Model, CRUD):
         'mysql_charset': 'utf8'
     }
 
-    property_uuid = db.Column(db.String(32), default = get_uuid, primary_key = True, comment = u'房产类型索引')
-    property_name = db.Column(db.String(64), comment = u'房产类型名, example: 别墅')
+    property_uuid = db.Column(db.String(36), default = get_uuid, primary_key = True, comment = u'房产类型索引')
+    property_name = db.Column(db.String(64), comment = u'房产类型名, example: 住宅')
     property_type = db.Column(db.Integer,    comment = u'房产类型所属类型, 0: 内置, 1: 自定义')
 
     def __init__(self, property_name, property_type = 1):
