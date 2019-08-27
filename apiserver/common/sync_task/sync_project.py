@@ -1,20 +1,71 @@
 # -*- coding: UTF-8 -*-
 import json
-from project_utils import logger, db_exec, db_query
+import requests
+from project_utils import logger, db_exec, db_query, get_uuid
+from task_config import PROJECT_DETAILS
+
+class HouseTypeCache:
+    def __init__(self):
+        self.housetype_map__ = {}
+        self.__GenerateDict()
+
+    def __LoadHourse(self):
+        sql = "select housetype_uuid, spider_map from t_housingtype_dict"
+        try:
+            result = db_query(sql)
+        except Exception, e:
+            logger.error("HouseTypeCache::__LoadHourse: load housetype infomation unsuccessfully.")
+            return None
+        return result
+
+    def __GenerateDict(self):
+        result = self.__LoadHourse()
+        if not result:
+            return
+        for itr in result:
+            self.housetype_map__[itr[1]] = itr[0]
+
+    def GetHouseTypeMap(self):
+        if len(self.housetype_map__) == 0:
+            return None
+        return self.housetype_map__
 
 class ProjectSync:
     def __init__(self):
-        self.project_list__ = []
+        self.config__         = PROJECT_DETAILS
+        self.project_list__   = self.__LoadProject()
+        self.housetype_map__  = HouseTypeCache()
+        self.sql_value_list__ = []
+
+    def __GenerateHeader(self):
+        cookie = db_query("select opt_value from t_options_data where opt_key='cookie'", fetchone=True)
+        if not cookie:
+            logger.error("ProjectTask::GenerateHeader [ " + self.project_name__ + \
+                         "]: Export valid cookie.")
+            return None
+        self.config__['url_header']['Cookie'] = cookie[0]
+        return self.config__['url_header']
+
+    def __GeneratePayload(self, pro_name, house_type):
+        payload = self.config__['url_payload']
+        payload['sTypeName'] = pro_name
+        payload['sRoomTypeIds'] = house_type
+        return payload
 
     def ParseRespon(self, respon):
-        respon_objs = self.__ResponSerial(respon)
-        if not respon_objs:
-            logger.error("ProjectSync::ParseRespon: instance response unsuccessfully.")
-            return None
         try:
-            project_num = respon_objs['Table'][0]['Column1']
-            for itr in respon_objs['Table1']:
-                self.__ParseOneProject(itr)
+            project_num = 0
+            header = self.__GenerateHeader()
+            for itr in self.project_list__:
+                for key, value in self.housetype_map__:
+                    payload = self.__GeneratePayload(itr[1], key)
+                    try:
+                        response = requests.post(self.config__['statistic_url'],
+                                                 data={'jsonParameters': json.dumps(payload)}, headers=header)
+                    except Exception, e:
+                        logger.error("ProjectTask::ParseRespon: request url unsuccessfully, errmsg: " + e.message)
+                        continue
+                    self.__ParseOneProject(itr[0], value, response)
         except Exception, e:
             logger.error('ProjectSync::ParseRespon: parse response unsuccessfully.')
             return 0
@@ -28,20 +79,16 @@ class ProjectSync:
             logger.error('ProjectSync::DealResult: process sql unsuccessfully, sql: ' + final_sql)
 
     def __LoadProject(self):
-        sql = "select "
+        sql = "select pro_uuid, pro_name from t_project_info_data"
+        try:
+            result = db_query(sql)
+        except Exception, e:
+            logger.error("ProjectSync::__LoadProject: load projects unsuccessfully.")
+            return None
+        return result
 
     def __LoadDistrict(self):
-        city     = db_query("select city_uuid, city_name, province_uuid from t_city_dict")
-        district = db_query("select district_uuid, district_name, city_uuid from t_district_dict")
-        if not city or not district:
-            logger.error("ProjectSync::__LoadDistrict: load province/city/district unsuccessfully")
-            return
-        city_dict = {}
-        for ctr in city:
-            city_dict[ctr[0]] = ctr[2]
-        for itr in district:
-            value = [city_dict[itr[2]], itr[2], itr[0]]
-            self.district_map__[itr[1]] = value
+        return None
 
     def __LoadProperty(self):
         property = db_query("select property_uuid, property_name from t_property_dict")
@@ -51,33 +98,29 @@ class ProjectSync:
         for itr in property:
             self.property_map__[itr[1]] = itr[0]
 
-    def __ParseOneProject(self, project):
-        project_uuid  = project['sPropertyID']
-        proterty_name = project['sPropertyName']
-        companty_name = project['sCompanyName']
-        root_price    = project['fRoomPrice']
-        root_area     = project['fRoomArea']
-        property_attr = self.district_map__[project['sDistrictName']]  if self.district_map__.get(project['sDistrictName']) else None
-        province_uuid = "'%s'" %(property_attr[0]) if property_attr else "''"
-        city_uuid     = "'%s'" %(property_attr[1]) if property_attr else "''"
-        district_uuid = "'%s'" %(property_attr[2]) if property_attr else "''"
-
-        project_item = "(%s, %s, %s, %f, %f, %s, %s, %s)"\
-                %("'%s'" %(project_uuid), "'%s'" %(proterty_name) if proterty_name else "''",
-                  "'%s'" %(companty_name) if companty_name else "''",
-                  root_price if root_price else 0, root_area if root_area else 0,
-                  province_uuid,  city_uuid, district_uuid)
-        self.project_list__.append(project_item)
+    def __ParseOneProject(self, pro_uuid, housetype_uuid, project):
+        detail = self.__ResponSerial(project)
+        if detail is None or getattr(detail, 'result'):
+            return
+        detail_uuid = "'%s'" %(get_uuid())
+        detail_project_uuid = "'%s'" %(pro_uuid)
+        detail_housetype_uuid = "'%s'" %(housetype_uuid)
+        detail_area = float(detail['fOneRoomArea'])
+        detail_price = float(detail['12580'])
+        project_addr = detail['sDistrictName']
+        detail_item = "(%s, %s, %s, %f, %f)" \
+                % (detail_uuid, detail_project_uuid, detail_housetype_uuid, detail_area, detail_price)
+        self.sql_value_list__.append(detail_item)
 
     def __GenerateSql(self):
-        if not len(self.project_list__):
+        if not len(self.sql_value_list__):
             logger.error("ProjectSync::__GenerateSql: invalid project list.")
             return None
-        sql = "insert into t_project_info_data (pro_uuid, pro_name, pro_company, pro_ave_price, pro_total_area," \
-              "pro_province_uuid, pro_city_uuid, pro_district_uuid) values"
-        for itr in self.project_list__:
+        sql = "insert into t_project_detail_data (detail_uuid, detail_project_uuid, detail_housetype_uuid," \
+              "detail_area, detail_price) values"
+        for itr in self.sql_value_list__:
             sql += itr
-            if itr != self.project_list__[-1]:
+            if itr != self.sql_value_list__[-1]:
                 sql += ','
         sql += ';'
         return sql

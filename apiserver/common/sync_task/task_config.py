@@ -22,6 +22,7 @@ TASK_REGISTER = {
         'ProjectDetailSync'
     ],
     2: [
+        'ProjectSync'
     ],
     3: [
     ],
@@ -80,7 +81,7 @@ PROJECT_SYNC = {
 }
 
 
-PROJECT_SYNC111 = {
+PROJECT_DETAILS = {
     'statistic_type': [
         u'成交情况'
     ],

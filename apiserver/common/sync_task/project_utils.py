@@ -68,8 +68,6 @@ def db_exec(sqli, executemany=None):
         # 提交到数据库执行
         db.commit()
     except Exception as e:
-        import pdb
-        pdb.set_trace()
         logger.error(e.message)
         logger.error(sqli)
         logger.error(executemany)

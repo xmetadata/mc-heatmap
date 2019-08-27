@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import json
 import urllib
-from project_utils import logger, db_exec, db_query
+from project_utils import logger, db_exec, db_query, get_uuid
 
 class ProjectDetailSync:
     def __init__(self):
@@ -58,7 +58,7 @@ class ProjectDetailSync:
         return [province_uuid, city_uuid, district_uuid]
 
     def __ParseOneProject(self, project):
-        pro_uuid       = "'%s'" %(project['id'])
+        pro_uuid       = "'%s'" %(get_uuid())
         pro_name       = "'%s'" %(project['title'])
         pro_address    = "'%s'" %(project['address'])
         pro_company    = "'%s'" %(project['developer'])
@@ -69,10 +69,6 @@ class ProjectDetailSync:
         pro_lng        = str(project['x'])
         pro_lat        = str(project['y'])
         pro_sale_date  = "'%s'" % (project['openDate'])
-        #project_info  = self.__GetDictrict(project['district'])
-        #if not project_info:
-        #    logger.error("ProjectDetailSync::__ParseOneProject: invalid zone infomation.")
-        #    return
         province_uuid = "'%s'" % (u'db448841c7a011e9878e00163e1caaa2')
         city_uuid     = "'%s'" % (u'db448840c7a011e9878e00163e1caaa2')
         district_uuid = "'%s'" % (u'db448851c7a011e9878e00163e1caaa2')
