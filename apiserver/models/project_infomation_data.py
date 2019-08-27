@@ -29,8 +29,6 @@ class ProjectInfomationModel(db.Model, CRUD):
     pro_lat           = db.Column(db.String(128), comment = u'楼盘纬度')
     pro_sale_date     = db.Column(db.DateTime,    comment = u'楼盘开始售卖日期')
 
-    pro_property_uuid = db.Column(db.String(36), db.ForeignKey('t_property_dict.property_uuid'),     comment = u'外键，关联项目类型，住宅，商铺，写字楼')
-    pro_property      = db.relationship('PropertyModel', backref = db.backref('projects'),    lazy = 'dynamic')
     pro_province_uuid = db.Column(db.String(36), db.ForeignKey('t_province_dict.province_uuid'),     comment = u'外键，关联楼盘所属省份')
     pro_province      = db.relationship('ProvinceModel', backref = db.backref('projects'),    lazy = 'dynamic')
     pro_city_uuid     = db.Column(db.String(36), db.ForeignKey('t_city_dict.city_uuid'),             comment = u'外键，关联楼盘所属城市')

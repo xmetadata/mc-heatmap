@@ -5,10 +5,6 @@ from project_utils import logger, db_exec, db_query
 class ProjectSync:
     def __init__(self):
         self.project_list__ = []
-        self.district_map__ = {}
-        self.property_map__ = {}
-        self.__LoadDistrict()
-        self.__LoadProperty()
 
     def ParseRespon(self, respon):
         respon_objs = self.__ResponSerial(respon)
@@ -30,6 +26,9 @@ class ProjectSync:
             db_exec(final_sql)
         except Exception, e:
             logger.error('ProjectSync::DealResult: process sql unsuccessfully, sql: ' + final_sql)
+
+    def __LoadProject(self):
+        sql = "select "
 
     def __LoadDistrict(self):
         city     = db_query("select city_uuid, city_name, province_uuid from t_city_dict")

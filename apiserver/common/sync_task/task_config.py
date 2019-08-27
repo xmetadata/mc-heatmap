@@ -13,7 +13,8 @@ STATGAP = -10
 CURRENT_PROJECT = {}
 
 MODULES = [
-    'sync_project_detail'
+    'sync_project_detail',
+    'sync_project'
 ]
 
 TASK_REGISTER = {
