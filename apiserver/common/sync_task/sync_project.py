@@ -30,12 +30,35 @@ class HouseTypeCache:
             return None
         return self.housetype_map__
 
+housetype_cache = HouseTypeCache()
+
 class ProjectSync:
     def __init__(self):
         self.config__         = PROJECT_DETAILS
         self.project_list__   = self.__LoadProject()
-        self.housetype_map__  = HouseTypeCache()
+        self.housetype_map__  = housetype_cache.GetHouseTypeMap()
+        self.property_map__   = {}
         self.sql_value_list__ = []
+
+    def __LoadProject(self):
+        sql = "select pro_uuid, pro_name from t_project_info_data"
+        try:
+            result = db_query(sql)
+        except Exception, e:
+            logger.error("ProjectSync::__LoadProject: load projects unsuccessfully.")
+            return None
+        return result
+
+    def __LoadProperty(self):
+        property = db_query("select property_uuid, property_name from t_property_dict")
+        if not property:
+            logger.error("ProjectSync::__LoadProperty: load property dict unsuccessfully.")
+            return
+        for itr in property:
+            self.property_map__[itr[1]] = itr[0]
+
+    def __LoadDistrict(self):
+        return None
 
     def __GenerateHeader(self):
         cookie = db_query("select opt_value from t_options_data where opt_key='cookie'", fetchone=True)
@@ -48,69 +71,9 @@ class ProjectSync:
 
     def __GeneratePayload(self, pro_name, house_type):
         payload = self.config__['url_payload']
-        payload['sTypeName'] = pro_name
+        payload['sPropertyName'] = pro_name
         payload['sRoomTypeIds'] = house_type
         return payload
-
-    def ParseRespon(self, respon):
-        try:
-            project_num = 0
-            header = self.__GenerateHeader()
-            for itr in self.project_list__:
-                for key, value in self.housetype_map__:
-                    payload = self.__GeneratePayload(itr[1], key)
-                    try:
-                        response = requests.post(self.config__['statistic_url'],
-                                                 data={'jsonParameters': json.dumps(payload)}, headers=header)
-                    except Exception, e:
-                        logger.error("ProjectTask::ParseRespon: request url unsuccessfully, errmsg: " + e.message)
-                        continue
-                    self.__ParseOneProject(itr[0], value, response)
-        except Exception, e:
-            logger.error('ProjectSync::ParseRespon: parse response unsuccessfully.')
-            return 0
-        return project_num
-
-    def ProcessResult(self):
-        final_sql = self.__GenerateSql()
-        try:
-            db_exec(final_sql)
-        except Exception, e:
-            logger.error('ProjectSync::DealResult: process sql unsuccessfully, sql: ' + final_sql)
-
-    def __LoadProject(self):
-        sql = "select pro_uuid, pro_name from t_project_info_data"
-        try:
-            result = db_query(sql)
-        except Exception, e:
-            logger.error("ProjectSync::__LoadProject: load projects unsuccessfully.")
-            return None
-        return result
-
-    def __LoadDistrict(self):
-        return None
-
-    def __LoadProperty(self):
-        property = db_query("select property_uuid, property_name from t_property_dict")
-        if not property:
-            logger.error("ProjectSync::__LoadProperty: load property dict unsuccessfully.")
-            return
-        for itr in property:
-            self.property_map__[itr[1]] = itr[0]
-
-    def __ParseOneProject(self, pro_uuid, housetype_uuid, project):
-        detail = self.__ResponSerial(project)
-        if detail is None or getattr(detail, 'result'):
-            return
-        detail_uuid = "'%s'" %(get_uuid())
-        detail_project_uuid = "'%s'" %(pro_uuid)
-        detail_housetype_uuid = "'%s'" %(housetype_uuid)
-        detail_area = float(detail['fOneRoomArea'])
-        detail_price = float(detail['12580'])
-        project_addr = detail['sDistrictName']
-        detail_item = "(%s, %s, %s, %f, %f)" \
-                % (detail_uuid, detail_project_uuid, detail_housetype_uuid, detail_area, detail_price)
-        self.sql_value_list__.append(detail_item)
 
     def __GenerateSql(self):
         if not len(self.sql_value_list__):
@@ -132,6 +95,67 @@ class ProjectSync:
             logger.error("ProjectSync::__ResponSerial: invalid serialization of response, errmsg: " + e.message)
             return None
         return objs
+
+    def __ParseOneProject(self, pro_uuid, housetype_uuid, project):
+        result = self.__ResponSerial(project)
+        if not result or result.has_key(u'result'):
+            return
+        details = result['Table1']
+        for detail in details:
+            detail_uuid = "'%s'" %(get_uuid())
+            detail_project_uuid = "'%s'" %(pro_uuid)
+            detail_housetype_uuid = "'%s'" %(housetype_uuid)
+            detail_area = float(detail['fOneRoomArea'])
+            detail_price = float(detail['fRoomPrice'])
+            project_addr = detail['sDistrictName']
+            detail_item = "(%s, %s, %s, %f, %f)" \
+                    % (detail_uuid, detail_project_uuid, detail_housetype_uuid, detail_area, detail_price)
+            self.sql_value_list__.append(detail_item)
+
+    def __ProcessOneProject(self, header, project):
+        if not project:
+            return
+        pro_name = project[1]
+        pro_uuid = project[0]
+        for key, value in self.housetype_map__.items():
+            payload = self.__GeneratePayload(pro_name, key)
+            try:
+                response = requests.post(self.config__['statistic_url'],
+                                         data={'jsonParameters': json.dumps(payload)}, headers=header)
+            except Exception, e:
+                logger.error("ProjectTask::__ProcessOneProject: request url unsuccessfully, errmsg: " + e.message)
+                continue
+            self.__ParseOneProject(pro_uuid, value, response.text)
+            if len(self.sql_value_list__) >= 10:
+                self.__ProcessOnceResult()
+
+    def __ProcessOnceResult(self):
+        final_sql = self.__GenerateSql()
+        try:
+            db_exec(final_sql)
+        except Exception, e:
+            logger.error('ProjectSync::DealResult: process sql unsuccessfully, sql: ' + final_sql)
+        self.sql_value_list__ = []
+
+    def ParseRespon(self, respon, conf):
+        try:
+            project_num = 0
+            header = self.__GenerateHeader()
+            for itr in self.project_list__:
+                self.__ProcessOneProject(header, itr)
+        except Exception, e:
+            logger.error('ProjectSync::ParseRespon: parse response unsuccessfully.')
+            return 0
+        return project_num
+
+    def ProcessResult(self):
+        final_sql = self.__GenerateSql()
+        if not final_sql:
+            return
+        try:
+            db_exec(final_sql)
+        except Exception, e:
+            logger.error('ProjectSync::DealResult: process sql unsuccessfully, sql: ' + final_sql)
 
     @classmethod
     def GeneratePayload(cls, config, page, statistic_type):

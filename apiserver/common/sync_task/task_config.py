@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 DB = {
-    'host': '106.14.174.55',
+    'host': '47.103.36.82',
     'username': 'root',
     'password': 'Aa888888',
     'database': 'heatmap',
@@ -80,7 +80,6 @@ PROJECT_SYNC = {
         }
 }
 
-
 PROJECT_DETAILS = {
     'statistic_type': [
         u'成交情况'
@@ -93,7 +92,7 @@ PROJECT_DETAILS = {
             'Cookie': ''
         },
     'url_payload': {
-            "sTypeName": "",
+            "sTypeName": u"成交情况",
             "sCityID": "926123c5-6fc4-495e-8f9d-149c201ed933",
             "sDealDataTableType": "week",
             "dBeginDate": "2019-06-23",
@@ -118,69 +117,4 @@ PROJECT_DETAILS = {
             "iPageSize": "100",
             "fixStatus": ""
         }
-}
-
-PROJECT_ATTR_SYNC = {
-    'statistic_type' : [
-        u'住宅',
-        u'商铺',
-        u'写字楼'
-    ],
-    'statistic_url': 'https://creis.fang.com/city/Property/GetPropertySearchInterface/',
-    'url_header': {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Origin': 'https://creis.fang.com',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36',
-            'Cookie': '',
-        },
-    'url_payload': {
-        "urlParams": {
-                "sPropertyName": "",
-                "sBuildcyc": "住宅,别墅,经济适用房",
-                "sSaleDateBegin": "",
-                "sSaleDateEnd": "",
-                "sDeveloper": "",
-                "sDistrictID": "1230,1231,1232,1233,1234,99,1236,759,760,1237,761,2109,2110,2111,2112,2113,2114,2115,2116,2196",
-                "fPriceBegin": "",
-                "fPriceEnd": "",
-                "sCityZongID": "",
-                "iCityBoradID": "",
-                "sLivinDateBegin": "",
-                "sLivinDateEnd": "",
-                "sEnterpriseName": "",
-                "sStatusID": "0,1,2",
-                "sFIXSTATTUS": "1,2",
-                "fPurposeAreaBegin": "",
-                "fPurposeAreaEnd": "",
-                "BuildCategory": "",
-                "sColumns": "sAvgPrice,sDeveloper,sSaleTelphone,sStatus,sBuildcyc,sCHARACTER,BuildCategory,sFIXSTATTUS,sCityZone,sDistrict,sAddress,sSaleDate,sLivinDate,fGroundArea,fPurposeArea,fDimension,fVirescenceRate,sPropertyFee,sPropertyManage,sSaleCard,sTotalDoor",
-                "sSortColumn": "housestatussaledate",
-                "sStationId": "",
-                "sProjectFeature": "",
-                "sSortType": "0",
-                "pageCount": "100",
-                "iPageIndex": "1",
-                "sCompleteStartDate": "",
-                "sCompleteEndDate": ""
-            },
-            "proids": "",
-            "type": "house"
-        }
-}
-
-PROJECT_INFO_SYNC = {
-    'statistic_type' : [
-            u'住宅',
-            u'商铺',
-            u'写字楼'
-        ],
-    'statistic_url': 'https://creis.fang.com/city/Property/GetPropertySearchInterface/',
-    'url_header': {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Origin': 'https://creis.fang.com',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36',
-                'Cookie': '',
-            },
-    'url_payload': {
-    }
 }

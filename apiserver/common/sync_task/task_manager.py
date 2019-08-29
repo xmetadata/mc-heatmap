@@ -14,7 +14,7 @@ class Task:
     def __GenerateProjectClass(self):
         for itr in MODULES:
             module = importlib.import_module(itr)
-            cls = getattr(module, self.project_name__)
+            cls = getattr(module, self.project_name__, None)
             if cls:
                 return cls
         return None

@@ -20,7 +20,7 @@ class ProductionConfig(Config):
 
     # MySQL
     SQLALCHEMY_TRACK_MODIFICATIONS = True
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Aa888888@106.14.174.55:3306/heatmap?charset=utf8'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Aa888888@47.103.36.82:3306/heatmap?charset=utf8'
 
 
 class DevelopmentConfig(Config):
