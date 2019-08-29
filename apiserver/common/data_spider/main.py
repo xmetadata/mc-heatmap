@@ -8,18 +8,20 @@ import gevent
 import requests
 from gevent import monkey
 from gevent.pool import Pool
+from uuid import uuid1
 
 from config import (CURRENT_PROJECT, HEADERS, POOLSIZE, PROJECT_PAYLOAD,
                     STATGAP, TEST_PAYLOAD, logger)
 from utils import db_exec, db_query, is_float, last_day_of_month
 
 monkey.patch_socket()
+monkey.patch_ssl()
 
 
 def sync_project():
     logger.info('Synchronize project start...')
     # 获取已入库项目列表
-    sql = 'select * from project'
+    sql = 'select * from projects'
     results = db_query(sql)
     has_project = [row[1] for row in results]
     # 发现新项目
@@ -55,14 +57,14 @@ def sync_project():
                     if project['title'] not in temp_project:
                         temp_project.append(project['title'])
                         if is_float(project['y']) and is_float(project['y']):
-                            disc_project.append((project['title'], unquote(project['address'].encode(
+                            disc_project.append((uuid1().hex, project['title'], unquote(project['address'].encode(
                                 'UTF-8', 'ignore')).decode('UTF-8', 'ignore'), round(float(project['x']), 6), round(float(project['y']), 6)))
     # 入库新项目
-    sql = 'insert into project(name, address, lat, lng) values(%s, %s, %s, %s)'
+    sql = 'insert into projects(pro_uuid, pro_name, pro_address, pro_lat, pro_lng) values(%s, %s, %s, %s, %s)'
     db_exec(sql, executemany=disc_project)
     # 最新项目列表
     logger.info('Refresh global CURRENT_PROJECT.')
-    sql = 'select * from project'
+    sql = 'select * from projects'
     results = db_query(sql)
     global CURRENT_PROJECT
     for row in results:
@@ -298,19 +300,18 @@ if __name__ == "__main__":
     logger.info('Start...')
     # 1.获取Cookie记录
     results = db_query(
-        'select * from options where opt_key = "cookie"', fetchone=True)
+        'select * from t_options_data where opt_key = "cookie"', fetchone=True)
     HEADERS['Cookie'] = results[2]
 
     # 2.判断Cookie是否有效
     url = 'https://creis.fang.com/city/PropertyStatistics/DetailsAjax'
-    r = requests.post(
-        url, data={'jsonParameters': json.dumps(TEST_PAYLOAD)}, headers=HEADERS)
     try:
+        r = requests.post(
+            url, data={'jsonParameters': json.dumps(TEST_PAYLOAD)}, headers=HEADERS)
         json.loads(r.text)
-    except:
+    except Exception, e:
         logger.error(r.text)
         exit()
-
     # 3.若脚本已经开始运行则退出
     # results = db_query(
     #     'select * from options where opt_key = "spider_status"', fetchone=True)

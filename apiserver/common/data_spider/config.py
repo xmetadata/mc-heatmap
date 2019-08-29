@@ -117,10 +117,10 @@ TEST_PAYLOAD = {
     "sTypeName": "成交情况",
     "sCityID": "926123c5-6fc4-495e-8f9d-149c201ed933",
     "sDealDataTableType": "week",
-    "dBeginDate": "2019-01-01",
-    "dEndDate": "2019-01-01",
+    "dBeginDate": "2019-06-30",
+    "dEndDate": "2019-08-29",
     "sPropertyDistrictIds": "",
-    "sPropertyTypeIds": "2",
+    "sPropertyTypeIds": "2,1,12,8,15,5,20,7,10,3,9,46",
     "sBoardIds": "",
     "sRoomTypeIds": "",
     "sCityZoneIds": "",
@@ -136,7 +136,8 @@ TEST_PAYLOAD = {
     "sOrderName": "dealnum",
     "sOrderType": "desc",
     "iPageIndex": "1",
-    "iPageSize": "1"
+    "iPageSize": "15",
+    "fixStatus": ""
 }
 
 HEADERS = {
