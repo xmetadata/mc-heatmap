@@ -112,60 +112,67 @@ def download_dataset(param):
     if param['arrange']['type'] == 'room':  # 房型
         payload['sRoomTypeIds'] = param['arrange']['room'].split(':')[1]
         arrange = param['arrange']['room'].split(':')[0]
-        table = 'dataset_rg_room'
+        table = 'dataset_room'
     elif param['arrange']['type'] == 'area':  # 面积
         payload['fRoomAreaBegin'] = param['arrange']['from']
         payload['fRoomAreaEnd'] = param['arrange']['to']
         arrange = param['arrange']['from']
-        table = 'dataset_rg_area'
+        table = 'dataset_area'
     elif param['arrange']['type'] == 'amount':  # 总价
         payload['fRoomAmountBegin'] = param['arrange']['from']
         payload['fRoomAmountEnd'] = param['arrange']['to']
         arrange = param['arrange']['from']
-        table = 'dataset_rg_amount'
+        table = 'dataset_amount'
     elif param['arrange']['type'] == 'price':  # 单价
         payload['fRoomPriceBegin'] = param['arrange']['from']
         payload['fRoomPriceEnd'] = param['arrange']['to']
         arrange = param['arrange']['from']
-        table = 'dataset_rg_price'
+        table = 'dataset_price'
     else:
         arrange = ''
-        table = 'dataset_rg_none'
+        table = 'dataset_none'
     url = 'https://creis.fang.com/city/PropertyStatistics/DetailsAjax'
-    r = requests.post(
+    try:
+        r = requests.post(
         url, data={'jsonParameters': json.dumps(payload)}, headers=HEADERS)
-    r_json = json.loads(r.text)
+        r_json = json.loads(r.text)
+    except Exception, e:
+        import pdb
+        pdb.set_trace()
+    if r_json.has_key('result'):
+        return
     collector.extend(r_json['Table1'])
-    pages = int(int(r_json['Table'][0]['Column1']) / 100)
+    pages = int(int(r_json['Table'][0]['Column1'])/100)
     if pages > 0:
         for pg in range(2, pages + 2):
             payload['iPageIndex'] = pg
             r = requests.post(
                 url, data={'jsonParameters': json.dumps(payload)}, headers=HEADERS)
             r_json = json.loads(r.text)
+            if r_json.has_key('result'):
+                continue
             collector.extend(r_json['Table1'])
     if collector:
-        sql = 'DELETE FROM dataset_rg_none WHERE stattype="%s" AND statdate="%s" AND city="%s" AND property="%s" AND arrange="%s"' % (
+        sql = 'DELETE FROM dataset_none WHERE stattype="%s" AND statdate="%s" AND city="%s" AND property="%s" AND arrange="%s"' % (
             param['stattype'], param['statdate'].strftime("%Y-%m-%d"), param['city'].split(':')[0], param['property'].split(':')[0], arrange)
         db_exec(sql)
         data = []
         for item in collector:
-            if CURRENT_PROJECT.has_key(item['sInstalmentName']):
+            if CURRENT_PROJECT.has_key(item['sPropertyName']):
                 if item['fRoomArea'] < 0:
                     item['fRoomArea'] = 0
                 if param['stattype'] == u'成交情况':
-                    data.append([param['stattype'], param['statdate'].strftime("%Y-%m-%d"), CURRENT_PROJECT[item['sInstalmentName']], param['city'].split(
+                    data.append([uuid1().hex, param['stattype'], param['statdate'].strftime("%Y-%m-%d"), CURRENT_PROJECT[item['sPropertyName']], param['city'].split(
                         ':')[0], item['sDistrictName'], param['property'].split(':')[0], arrange, item['iDealNum'], item['fRoomArea'], item['fRoomAmount']])
                 elif param['stattype'] == u'上市情况':
-                    data.append([param['stattype'], param['statdate'].strftime("%Y-%m-%d"), CURRENT_PROJECT[item['sInstalmentName']], param['city'].split(
+                    data.append([uuid1().hex, param['stattype'], param['statdate'].strftime("%Y-%m-%d"), CURRENT_PROJECT[item['sPropertyName']], param['city'].split(
                         ':')[0], item['sDistrictName'], param['property'].split(':')[0], arrange, item['iNum'], item['fRoomArea'], 0])
                 else:
-                    data.append([param['stattype'], param['statdate'].strftime("%Y-%m-%d"), CURRENT_PROJECT[item['sInstalmentName']], param['city'].split(
+                    data.append([uuid1().hex, param['stattype'], param['statdate'].strftime("%Y-%m-%d"), CURRENT_PROJECT[item['sPropertyName']], param['city'].split(
                         ':')[0], item['sDistrictName'], param['property'].split(':')[0], arrange, item['iNum'], item['fRoomArea'], 0])
         sql = 'INSERT INTO ' + table + \
-            '(stattype, statdate, project_id, city, scope, property, arrange, number, area, amount) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+            '(uuid, stattype, statdate, pro_uuid, city, scope, property, arrange, number, area, amount) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
         db_exec(sql, data)
-
 
 def sync_dataset(spider_args, statdate):
     logger.info('Synchronize dataset start...')
@@ -314,12 +321,12 @@ if __name__ == "__main__":
         exit()
     # 3.若脚本已经开始运行则退出
     # results = db_query(
-    #     'select * from options where opt_key = "spider_status"', fetchone=True)
+    #     'select * from t_options_data where opt_key = "spider_status"', fetchone=True)
     # if int(results[2]) == 1:
     #     logger.error('Spider is running.')
     #     exit()
     # else:
-    #     sql = 'update options set opt_value = 1 where opt_key = "spider_status"'
+    #     sql = 'update t_options_data set opt_value = 1 where opt_key = "spider_status"'
     #     db_exec(sql)
 
     # 4.更新项目信息
@@ -328,24 +335,24 @@ if __name__ == "__main__":
 
     # 5.获取爬虫参数
     results = db_query(
-        'select * from options where opt_key = "spider_args"', fetchone=True)
+        'select * from t_options_data where opt_key = "spider_args"', fetchone=True)
     spider_args = json.loads(results[2])
     logger.info('Spider args: ' + json.dumps(spider_args, indent=2))
 
     # 6.按日期爬取
     results = db_query(
-        'select * from options where opt_key = "spider_at"', fetchone=True)
+        'select * from t_options_data where opt_key = "spider_at"', fetchone=True)
     spider_at = datetime.strptime(results[2], "%Y-%m-%d")
     days = (datetime.now() + timedelta(days=STATGAP) - spider_at).days
     for num in range(1, days):
         statdate = spider_at + timedelta(days=num)
         sync_dataset(spider_args, statdate)
-        sql = 'update options set opt_value = "%s" where opt_key = "spider_at"' % statdate.strftime(
+        sql = 'update t_options_data set opt_value = "%s" where opt_key = "spider_at"' % statdate.strftime(
             "%Y-%m-%d")
         db_exec(sql)
 
     # 7.重置运行状态
-    sql = 'update options set opt_value = 0 where opt_key = "spider_status"'
+    sql = 'update t_options_data set opt_value = 0 where opt_key = "spider_status"'
     db_exec(sql)
 
     logger.info('Finish.')
