@@ -9,11 +9,14 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from common.utils import StandardResponse
 from models.users import UsersModel, UsersSchema
+from models.dataset_rg_area import DatasetAreaModel, DatasetAreaSchema
 
 class UserManager(Resource):
     @jwt_required()
     def get(self, uuid):
         # search interface
+        import pdb
+        pdb.set_trace()
         if current_identity.roles not in ['super'] and \
                 uuid != current_identity.id:
             return StandardResponse(403, 1, '非管理员, 无权限')

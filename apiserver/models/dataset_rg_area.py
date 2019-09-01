@@ -2,6 +2,7 @@
 from marshmallow import Schema, fields, post_load
 
 from common.utils import CRUD, db, get_uuid
+from models.projects import ProjectsModel, ProjectsSchema
 
 class DatasetAreaModel(db.Model, CRUD):
     __tablename__ = "dataset_area"
@@ -10,10 +11,11 @@ class DatasetAreaModel(db.Model, CRUD):
     }
     uuid     = db.Column(db.String(32),  default = get_uuid, primary_key = True, comment = u'价格索引')
     pro_uuid = db.Column(db.String(32), db.ForeignKey('projects.pro_uuid'),  comment = u'外键，关联楼盘信息')
+    pro = db.relationship('ProjectsModel', backref=db.backref('project_details'), lazy='dynamic')
     city     = db.Column(db.String(64), comment = u'所属省市')
     scope    = db.Column(db.String(64), comment = u'所属区域')
     catalog  = db.Column(db.String(32), comment = u'统计分类')
-    stattype = db.Column(db.String(32), comment=u'统计类型')
+    stattype = db.Column(db.String(32), comment = u'统计类型')
     statdate = db.Column(db.DateTime,   comment = u'统计日期')
     datetype = db.Column(db.String(32), comment = u'日期类型')
     property = db.Column(db.String(32), comment = u'物业类型')
@@ -21,11 +23,11 @@ class DatasetAreaModel(db.Model, CRUD):
     interval = db.Column(db.Integer, default = 0, comment = u'区间标记')
     area     = db.Column(db.Float, default = 0, comment = u'面积')
     number   = db.Column(db.Float, default = 0, comment = u'数量')
-    amount    = db.Column(db.Float, comment = u'统计数值')
+    amount   = db.Column(db.Float, comment = u'统计数值')
 
 class DatasetAreaSchema(Schema):
     uuid     = fields.String()
-    pro_uuid = fields.String()
+    pro      = fields.Nested(ProjectsSchema)
     city     = fields.String()
     scope    = fields.String()
     catalog  = fields.String()
@@ -37,4 +39,4 @@ class DatasetAreaSchema(Schema):
     interval = fields.String()
     area     = fields.Float()
     number   = fields.Float()
-    amount    = fields.Float()
+    amount   = fields.Float()

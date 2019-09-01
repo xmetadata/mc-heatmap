@@ -137,8 +137,7 @@ def download_dataset(param):
         url, data={'jsonParameters': json.dumps(payload)}, headers=HEADERS)
         r_json = json.loads(r.text)
     except Exception, e:
-        import pdb
-        pdb.set_trace()
+        logger.warn("request url unsuccessfully.")
     if r_json.has_key('result'):
         return
     collector.extend(r_json['Table1'])
