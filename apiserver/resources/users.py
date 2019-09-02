@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from common.utils import StandardResponse
 from models.users import UsersModel, UsersSchema
 from models.dataset_rg_area import DatasetAreaModel, DatasetAreaSchema
+from models.projects import ProjectsModel, ProjectsSchema
 
 class UserManager(Resource):
     @jwt_required()
@@ -68,6 +69,8 @@ class UserManager(Resource):
 
 class UserRegister(Resource):
     def post(self):
+        import pdb
+        pdb.set_trace()
         # register interface
         req_data = request.get_json()
         user_name = req_data.get('username', None)
