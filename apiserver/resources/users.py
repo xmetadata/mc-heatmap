@@ -69,8 +69,6 @@ class UserManager(Resource):
 
 class UserRegister(Resource):
     def post(self):
-        import pdb
-        pdb.set_trace()
         # register interface
         req_data = request.get_json()
         user_name = req_data.get('username', None)

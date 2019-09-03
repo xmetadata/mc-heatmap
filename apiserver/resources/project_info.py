@@ -26,7 +26,20 @@ class Project(Resource):
             'endtm': '',
             'stattype': '',
             'property': [],
-            'interval': '',
+            'interval': [],
+        }
+        self.project__ = {
+            'name': '',
+            'lat': '',
+            'lng': '',
+            'address': '',
+            'count': ''
+        }
+        self.result__ = {
+            'center': '',
+            'zoom': '',
+            'max': '',
+            'data': []
         }
 
     def __RequestInstance(self, req):
@@ -56,29 +69,30 @@ class Project(Resource):
         param['province'] = request['province']
         param['city'] = request['city']
         param['district'] = request['district']
-        param['starttm'] = request['statdate']['from']
-        param['endtm'] = request['statdate']['to']
+        param['starttm'] = request['starttm']
+        param['endtm'] = request['endtm']
         param['stattype'] = request['stattype']
         param['property'] = request['property']
 
         if type == 'amount':
             param['table'] = DatasetAmountModel
-            for itr in request['interval']:
+            for itr in request['intervals']:
                 param['interval'].append([itr.split(':')[0], itr.split(':')[1]])
         elif type == 'price':
             param['table'] = DatasetPriceModel
-            for itr in request['interval']:
+            for itr in request['intervals']:
                 param['interval'].append([itr.split(':')[0], itr.split(':')[1]])
         elif type == 'area':
             param['table'] = DatasetAreaModel
-            for itr in request['interval']:
+            for itr in request['intervals']:
                 param['interval'].append([itr.split(':')[0], itr.split(':')[1]])
         elif type == 'room':
             param['table'] = DatasetRoomModel
-            param['interval'] = request['interval']
+            param['intervals'] = request['interval']
         elif type == 'none':
             param['table'] = DatasetNoneModel
-            param['interval'] = None
+            param['intervals'] = None
+        return param
 
     def __ProcessAmount(self, request):
         pass
@@ -87,17 +101,33 @@ class Project(Resource):
         pass
 
     def __ProcessArea(self, request):
-        param = self.__GenerateParam(request, DatasetAmountModel)
-        result = ProjectsModel().query.join(param['table'].scope == param['district'],
-                        param['table'].statdate.between(param['starttm'], param['endtm']),
-                        param['table'].stattype == param['stattype'] == param['stattype']).all()
+        param = self.__GenerateParam(request, 'area')
+        result = ProjectsModel().query.join(DatasetAreaModel).filter(DatasetAreaModel.scope == param['district'],
+                        DatasetAreaModel.statdate.between(param['starttm'], param['endtm']),
+                        DatasetAreaModel.property == param['property'][0]).all()
         if not result:
             return StandardResponse(500, 1, u'资源查找出错')
         projects = []
         for itr in result:
             if not itr.dataset_area:
                 continue
-            projects.append(itr)
+            count = 0.0
+            for dataset_itr in itr.dataset_area:
+                count += float(dataset_itr.amount)
+            project = self.project__
+            project['name'] = itr.pro_name
+            project['lat'] = itr.pro_lat
+            project['lng'] = itr.pro_lng
+            project['address'] = itr.pro_address
+            project['count'] = count
+            projects.append(project)
+        import pdb
+        pdb.set_trace()
+        if not len(projects):
+            return StandardResponse(404, 1, u'没有找到任何资源')
+        self.result__['data'] = projects
+        return StandardResponse(200, 0, self.result__)
+
 
     def __ProcessRoom(self, request):
         pass
