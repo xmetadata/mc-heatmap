@@ -8,6 +8,7 @@ from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from common.utils import StandardResponse
+from models.projects import ProjectsModel, ProjectsSchema
 from models.dataset_rg_amount import DatasetAmountModel, DatasetAmountSchema
 from models.dataset_rg_area import DatasetAreaModel, DatasetAreaSchema
 from models.dataset_rg_none import DatasetNoneModel, DatasetNoneSchema
@@ -50,34 +51,53 @@ class Project(Resource):
         result['intervals'] = req['intervals'] if req.has_key('intervals') else None
         return result
 
-    def __LoadProcessData(self, param):
-        result = []
-        if not param['city'] and not param['district']:
-            result = param['table'].query.filter(property in param['property']).all()
-
-    def __GenerateParam(self, request, table):
+    def __GenerateParam(self, request, type):
         param = self.param__
-        param['table'] = table
         param['province'] = request['province']
         param['city'] = request['city']
         param['district'] = request['district']
-        param['starttm'] = request['starttm']
-        param['endtm'] = request['endtm']
+        param['starttm'] = request['statdate']['from']
+        param['endtm'] = request['statdate']['to']
         param['stattype'] = request['stattype']
         param['property'] = request['property']
-        param['interval'] = request['interval']
+
+        if type == 'amount':
+            param['table'] = DatasetAmountModel
+            for itr in request['interval']:
+                param['interval'].append([itr.split(':')[0], itr.split(':')[1]])
+        elif type == 'price':
+            param['table'] = DatasetPriceModel
+            for itr in request['interval']:
+                param['interval'].append([itr.split(':')[0], itr.split(':')[1]])
+        elif type == 'area':
+            param['table'] = DatasetAreaModel
+            for itr in request['interval']:
+                param['interval'].append([itr.split(':')[0], itr.split(':')[1]])
+        elif type == 'room':
+            param['table'] = DatasetRoomModel
+            param['interval'] = request['interval']
+        elif type == 'none':
+            param['table'] = DatasetNoneModel
+            param['interval'] = None
 
     def __ProcessAmount(self, request):
-        param = self.__GenerateParam(request, DatasetAmountModel())
-        result = self.__LoadProcessData(param)
-        if not result:
-            return StandardResponse(500, 1, u'没有匹配的请求资源')
+        pass
 
     def __ProcessPrice(self, request):
         pass
 
     def __ProcessArea(self, request):
-        pass
+        param = self.__GenerateParam(request, DatasetAmountModel)
+        result = ProjectsModel().query.join(param['table'].scope == param['district'],
+                        param['table'].statdate.between(param['starttm'], param['endtm']),
+                        param['table'].stattype == param['stattype'] == param['stattype']).all()
+        if not result:
+            return StandardResponse(500, 1, u'资源查找出错')
+        projects = []
+        for itr in result:
+            if not itr.dataset_area:
+                continue
+            projects.append(itr)
 
     def __ProcessRoom(self, request):
         pass
