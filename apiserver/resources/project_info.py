@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import json
+import copy
 from datetime import datetime
 
 from flask import current_app
@@ -19,6 +20,7 @@ from models.dataset_rg_room import DatasetRoomModel, DatasetRoomSchema
 class Project(Resource):
     def __init__(self):
         self.param__ = {
+            'arrange': '',
             'province': '',
             'city': '',
             'district': '',
@@ -33,7 +35,7 @@ class Project(Resource):
             'lat': '',
             'lng': '',
             'address': '',
-            'count': ''
+            'count': 0.0
         }
         self.result__ = {
             'center': '',
@@ -64,8 +66,8 @@ class Project(Resource):
         result['intervals'] = req['intervals'] if req.has_key('intervals') else None
         return result
 
-    def __GenerateParam(self, request, type):
-        param = self.param__
+    def __GenerateParam(self, request, data_type):
+        param = copy.deepcopy(self.param__)
         param['province'] = request['province']
         param['city'] = request['city']
         param['district'] = request['district']
@@ -73,46 +75,46 @@ class Project(Resource):
         param['endtm'] = request['endtm']
         param['stattype'] = request['stattype']
         param['property'] = request['property']
+        param['arrange'] = request['arrange']
 
-        if type == 'amount' or type == 'price' or type == 'area':
+        if data_type in ['amount', 'price', 'area']:
             for itr in request['intervals']:
                 split_list = itr.split(':')
-                first = 0
-                second = 0
-                if len(split_list) == 1:
-                    second = split_list[1]
-                else:
-                    first = split_list[0]
-                    second = split_list[1]
-                param['intervals'].append([first, second])
-        elif type == 'room' or type == 'none':
+                param['intervals'].append([int(split_list[0]), int(split_list[1])])
+        elif data_type == 'room':
             param['intervals'] = request['intervals']
         return param
 
-    def __GenerateFilters(self, param, request):
+    def __GenerateFilters(self, table, param):
         filters = []
+        filter = []
         if param['city']:
-            filters.append(DatasetAreaModel.city == param['city'])
+            filter.append(table.city == param['city'])
         if param['district']:
-            filters.append(DatasetAreaModel.scope == param['district'])
+            filter.append(table.scope == param['district'])
         if param['starttm'] and param['endtm']:
-            filters.append(DatasetAreaModel.statdate.between(param['starttm'], param['endtm']))
+            filter.append(table.statdate.between(param['starttm'], param['endtm']))
         if len(param['property']):
-            filters.append(DatasetAreaModel.property.in_(param['property']))
+            filter.append(table.property.in_(param['property']))
+        inter_list = []
+        import pdb
+        pdb.set_trace()
         if len(param['intervals']):
-            inter_list = []
-            for itr in param['intervals']:
-                if request['stattype'] == u'sale':
-                    inter_list.append(DatasetAreaModel.area.between(itr[0], itr[1]))
-                elif request['stattype'] == u'price':
-                    inter_list.append(DatasetAreaModel.amount.between(itr[0], itr[1]))
-            if len(inter_list):
-                filters.append(or_(*inter_list))
+            if param['arrange'] in ['amount', 'price', 'area']:
+                for itr in param['intervals']:
+                    inter_list.append(table.arrange.between(itr[0], itr[1]))
+                if len(inter_list):
+                    filter.append(or_(*inter_list))
+            else:
+                inter_list.append(table.arrange.in_(param['intervals']))
+                if len(inter_list):
+                    filter.append(*inter_list)
+        filters.append(and_(*filter))
         return filters
 
     def __ProcessResult(self, result, stattype):
         if not result:
-            return StandardResponse(500, 1, u'资源查找出错')
+            return StandardResponse(404, 1, u'没有找到任何资源')
         projects = []
         for itr in result:
             if not itr.dataset_area:
@@ -123,7 +125,7 @@ class Project(Resource):
                     count += float(dataset_itr.area)
                 elif stattype == u'price':
                     count += float(dataset_itr.amount)
-            project = self.project__
+            project = copy.deepcopy(self.project__)
             project['name'] = itr.pro_name
             project['lat'] = itr.pro_lat
             project['lng'] = itr.pro_lng
@@ -136,28 +138,54 @@ class Project(Resource):
         return StandardResponse(200, 0, self.result__)
 
     def __ProcessAmount(self, request):
-        pass
+        param = self.__GenerateParam(request, 'amount')
+        if not param:
+            return StandardResponse(401, 1, u'解析请求参数出错')
+        filters = self.__GenerateFilters(DatasetAmountModel, param)
+        if not len(filters):
+            return StandardResponse(403, 1, u'查询数据库失败')
+        result = ProjectsModel().query.join(DatasetAmountModel).filter(*filters).all()
+        return self.__ProcessResult(result, param['stattype'])
 
     def __ProcessPrice(self, request):
-        pass
+        param = self.__GenerateParam(request, 'price')
+        if not param:
+            return StandardResponse(401, 1, u'解析请求参数出错')
+        filters = self.__GenerateFilters(DatasetPriceModel, param)
+        if not len(filters):
+            return StandardResponse(403, 1, u'查询数据库失败')
+        result = ProjectsModel().query.join(DatasetPriceModel).filter(*filters).all()
+        return self.__ProcessResult(result, param['stattype'])
 
     def __ProcessArea(self, request):
         param = self.__GenerateParam(request, 'area')
         if not param:
             return StandardResponse(401, 1, u'解析请求参数出错')
-        filters = self.__GenerateFilters(param, request)
+        filters = self.__GenerateFilters(DatasetAreaModel, param)
         if not len(filters):
             return StandardResponse(403, 1, u'查询数据库失败')
-        import pdb
-        pdb.set_trace()
         result = ProjectsModel().query.join(DatasetAreaModel).filter(*filters).all()
-        return self.__ProcessResult(result)
+        return self.__ProcessResult(result, param['stattype'])
 
     def __ProcessRoom(self, request):
-        pass
+        param = self.__GenerateParam(request, 'room')
+        if not param:
+            return StandardResponse(401, 1, u'解析请求参数出错')
+        filters = self.__GenerateFilters(DatasetRoomModel, param)
+        if not len(filters):
+            return StandardResponse(403, 1, u'查询数据库失败')
+        result = ProjectsModel().query.join(DatasetRoomModel).filter(*filters).all()
+        return self.__ProcessResult(result, param['stattype'])
 
     def __ProcessNone(self, request):
-        pass
+        param = self.__GenerateParam(request, 'none')
+        if not param:
+            return StandardResponse(401, 1, u'解析请求参数出错')
+        filters = self.__GenerateFilters(DatasetNoneModel, param)
+        if not len(filters):
+            return StandardResponse(403, 1, u'查询数据库失败')
+        result = ProjectsModel().query.join(DatasetNoneModel).filter(*filters).all()
+        return self.__ProcessResult(result, param['stattype'])
 
     @jwt_required()
     def get(self):
@@ -173,7 +201,7 @@ class Project(Resource):
             return self.__ProcessArea(result)
         elif result['arrange'] == u'room':
             return self.__ProcessRoom(result)
-        elif result['arrange'] == None:
+        elif result['arrange'] == u'none':
             return self.__ProcessNone(result)
         else:
             return StandardResponse(500, 1, u'无效的请求参数')

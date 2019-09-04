@@ -1,0 +1,67 @@
+数据获取接口：
+url: /apiserver/dataset
+payload:
+{
+    "stattype": "sale/price",
+    "datetype": "day",
+    "duration":  ["2019-08-29", "2019-09-02"],
+    "scope": ["陕西.西安市.雁塔区"],
+    "property": ['办公'],
+    "arrange": "area",
+    "intervals": [
+        "0:40", "40:60", "60:80", "300:3000"
+    ]
+}
+
+{
+    "stattype": "sale/price",
+    "datetype": "week",
+    "duration":  ["2019-09-01", "2019-09-07"],
+    "scope": ["陕西.西安市.雁塔区"],
+    "property": ['办公'],
+    "arrange": "amount",
+    "intervals": [
+        "0:120", "120:300", "300:1000"
+    ]
+}
+
+{
+    "stattype": "sale/price",
+    "datetype": "month",
+    "duration":  ["2019-09-01", "2019-09-30"],
+    "scope": ["陕西.西安市.雁塔区"],
+    "property": ['办公'],
+    "arrange": "none",
+    "intervals": [
+    ]
+}
+
+{
+    "stattype": "sale/price",
+    "datetype": "day",
+    "duration":  ["2019-08-29", "2019-09-02"],
+    "scope": ["陕西.西安市.雁塔区"],
+    "property": ['别墅'],
+    "arrange": "room",
+    "intervals": [
+        "其他"
+    ]
+}
+
+{
+    "stattype": "sale/price",
+    "datetype": "day",
+    "duration":  ["2019-08-29", "2019-09-02"],
+    "scope": ["陕西.西安市.雁塔区"],
+    "property": ['普通住宅'],
+    "arrange": "price",
+    "intervals": [
+        "0:10000", "10000:15000", "15000:50000"
+    ]
+}
+
+用户注册接口：
+url：/apiserver/userigister
+
+用户登录接口：
+url：/apiserver/auth
