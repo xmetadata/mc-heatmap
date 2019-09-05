@@ -57,9 +57,15 @@ class Project(Resource):
         result['starttm']  = req['duration'][0] if req.has_key('duration') else None
         result['endtm']    = req['duration'][1] if req.has_key('duration') else None
         if req.has_key('scope'):
-            result['province'] = req['scope'][0].split('.')[0]
-            result['city'] = req['scope'][0].split('.')[1]
-            result['district'] = req['scope'][0].split('.')[2]
+            scope_split = req['scope'][0].split('.')
+            if len(scope_split) > 3:
+                result['province'] = req['scope'][0].split('.')[0]
+                result['city'] = req['scope'][0].split('.')[1]
+                result['district'] = req['scope'][0].split('.')[2]
+            else:
+                result['province'] = None
+                result['city'] = None
+                result['district'] = None
         else:
             result['province'] = None
             result['city'] = None
