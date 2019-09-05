@@ -1,12 +1,15 @@
 数据获取接口：
 url: /apiserver/dataset
+method: get
+header:
+    Authorization : JWT + 空格 + token
 payload:
 {
     "stattype": "sale/price",
     "datetype": "day",
-    "duration":  ["2019-08-29", "2019-09-02"],
+    "duration":  ["2018-08-29", "2019-09-02"],
     "scope": ["陕西.西安市.雁塔区"],
-    "property": ['办公'],
+    "property": ["办公"],
     "arrange": "area",
     "intervals": [
         "0:40", "40:60", "60:80", "300:3000"
@@ -18,7 +21,7 @@ payload:
     "datetype": "week",
     "duration":  ["2019-09-01", "2019-09-07"],
     "scope": ["陕西.西安市.雁塔区"],
-    "property": ['办公'],
+    "property": ["办公"],
     "arrange": "amount",
     "intervals": [
         "0:120", "120:300", "300:1000"
@@ -28,9 +31,10 @@ payload:
 {
     "stattype": "sale/price",
     "datetype": "month",
-    "duration":  ["2019-09-01", "2019-09-30"],
+    "statdate": "2019-09",
+    "duration":  [],
     "scope": ["陕西.西安市.雁塔区"],
-    "property": ['办公'],
+    "property": ["办公"],
     "arrange": "none",
     "intervals": [
     ]
@@ -38,10 +42,11 @@ payload:
 
 {
     "stattype": "sale/price",
-    "datetype": "day",
-    "duration":  ["2019-08-29", "2019-09-02"],
+    "datetype": "year",
+    "statdate": "2019",
+    "duration":  [  ],
     "scope": ["陕西.西安市.雁塔区"],
-    "property": ['别墅'],
+    "property": ["别墅"],
     "arrange": "room",
     "intervals": [
         "其他"
@@ -53,7 +58,7 @@ payload:
     "datetype": "day",
     "duration":  ["2019-08-29", "2019-09-02"],
     "scope": ["陕西.西安市.雁塔区"],
-    "property": ['普通住宅'],
+    "property": ["普通住宅"],
     "arrange": "price",
     "intervals": [
         "0:10000", "10000:15000", "15000:50000"
@@ -62,6 +67,15 @@ payload:
 
 用户注册接口：
 url：/apiserver/userigister
+method: post
 
 用户登录接口：
 url：/apiserver/auth
+method: post
+
+返回结果（全局接口统一格式）：
+{
+    errcode: 0/1,   //1：错误， 0：正确
+    errmsg: '',     //若errcode为1，errmsg为对应错误
+    data：result    //若errcode为0，data为返回数据
+}

@@ -24,6 +24,8 @@ class Project(Resource):
             'province': '',
             'city': '',
             'district': '',
+            'datetype': '',
+            'statdate': '',
             'starttm': '',
             'endtm': '',
             'stattype': '',
@@ -44,6 +46,7 @@ class Project(Resource):
             'data': []
         }
 
+    #请求参数序列化
     def __RequestInstance(self, req):
         result = {}
         if not req:
@@ -66,13 +69,18 @@ class Project(Resource):
         result['intervals'] = req['intervals'] if req.has_key('intervals') else None
         return result
 
+    #请求参数格式化
     def __GenerateParam(self, request, data_type):
         param = copy.deepcopy(self.param__)
         param['province'] = request['province']
         param['city'] = request['city']
         param['district'] = request['district']
-        param['starttm'] = request['starttm']
-        param['endtm'] = request['endtm']
+        param['datetype'] = request['datetype']
+        if request['datetype'] in ['week', 'day']:
+            param['starttm'] = request['starttm']
+            param['endtm'] = request['endtm']
+        else:
+            param['statdate'] = request['statdate']
         param['stattype'] = request['stattype']
         param['property'] = request['property']
         param['arrange'] = request['arrange']
@@ -85,6 +93,7 @@ class Project(Resource):
             param['intervals'] = request['intervals']
         return param
 
+    #sqlalchemy过滤器生成
     def __GenerateFilters(self, table, param):
         filters = []
         filter = []
@@ -92,8 +101,12 @@ class Project(Resource):
             filter.append(table.city == param['city'])
         if param['district']:
             filter.append(table.scope == param['district'])
-        if param['starttm'] and param['endtm']:
-            filter.append(table.statdate.between(param['starttm'], param['endtm']))
+        if param['datetype'] in ['day', 'week']:
+            if param['starttm'] and param['endtm']:
+                filter.append(table.statdate.between(param['starttm'], param['endtm']))
+        else:
+            if param['statdate']:
+                filter.append(table.statdate.like(param['statdate'] + '%'))
         if len(param['property']):
             filter.append(table.property.in_(param['property']))
         inter_list = []
@@ -112,6 +125,7 @@ class Project(Resource):
         filters.append(and_(*filter))
         return filters
 
+    #处理查询结果
     def __ProcessResult(self, result, stattype):
         if not result:
             return StandardResponse(404, 1, u'没有找到任何资源')
@@ -135,7 +149,7 @@ class Project(Resource):
         if not len(projects):
             return StandardResponse(404, 1, u'没有找到任何资源')
         self.result__['data'] = projects
-        return StandardResponse(200, 0, self.result__)
+        return StandardResponse(200, 0, data = self.result__)
 
     def __ProcessAmount(self, request):
         param = self.__GenerateParam(request, 'amount')
@@ -144,7 +158,10 @@ class Project(Resource):
         filters = self.__GenerateFilters(DatasetAmountModel, param)
         if not len(filters):
             return StandardResponse(403, 1, u'查询数据库失败')
-        result = ProjectsModel().query.join(DatasetAmountModel).filter(*filters).all()
+        try:
+            result = ProjectsModel().query.join(DatasetAmountModel).filter(*filters).all()
+        except Exception, e:
+            return StandardResponse(50001, 1, e.message)
         return self.__ProcessResult(result, param['stattype'])
 
     def __ProcessPrice(self, request):
@@ -192,7 +209,7 @@ class Project(Resource):
         req_data = request.get_json()
         result = self.__RequestInstance(req_data)
         if not result:
-            return StandardResponse(404, 1, u'无效的请求数据')
+            return StandardResponse(40001, 1, u'无效的请求数据')
         if result['arrange'] == u'amount':
             return self.__ProcessAmount(result)
         elif result['arrange'] == u'price':
@@ -204,5 +221,4 @@ class Project(Resource):
         elif result['arrange'] == u'none':
             return self.__ProcessNone(result)
         else:
-            return StandardResponse(500, 1, u'无效的请求参数')
-
+            return StandardResponse(40001, 1, u'无效的请求数据')
