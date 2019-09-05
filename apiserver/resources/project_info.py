@@ -110,8 +110,6 @@ class Project(Resource):
         if len(param['property']):
             filter.append(table.property.in_(param['property']))
         inter_list = []
-        import pdb
-        pdb.set_trace()
         if len(param['intervals']):
             if param['arrange'] in ['amount', 'price', 'area']:
                 for itr in param['intervals']:
