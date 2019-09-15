@@ -28,9 +28,14 @@ class Project(Resource):
             'statdate': '',
             'starttm': '',
             'endtm': '',
-            'stattype': '',
+            'stattype': [],
             'property': [],
             'intervals': [],
+        }
+        self.stattype_map__ = {
+            "sale": "可售情况",
+            "1": "上市情况",
+            "2": "已售情况"
         }
         self.project__ = {
             'name': '',
@@ -57,19 +62,18 @@ class Project(Resource):
         result['starttm']  = req['duration'][0] if req.has_key('duration') else None
         result['endtm']    = req['duration'][1] if req.has_key('duration') else None
         if req.has_key('scope'):
-            scope_split = req['scope'][0].split('.')
-            if len(scope_split) > 3:
-                result['province'] = req['scope'][0].split('.')[0]
-                result['city'] = req['scope'][0].split('.')[1]
-                result['district'] = req['scope'][0].split('.')[2]
+            city_scope = req['scope'][0].split('.')
+            if len(city_scope) > 2:
+                result['province'] = city_scope[0]
+                result['city'] = city_scope[1]
+                if req['scope'][2] == "全市":
+                    result['district'] = None
+                else:
+                    result['district'] = req['scope'][2]
             else:
                 result['province'] = None
                 result['city'] = None
                 result['district'] = None
-        else:
-            result['province'] = None
-            result['city'] = None
-            result['district'] = None
         result['property'] = req['property'] if req.has_key('property') else None
         result['arrange']  = req['arrange'] if req.has_key('arrange') else None
         result['intervals'] = req['intervals'] if req.has_key('intervals') else None
@@ -115,6 +119,9 @@ class Project(Resource):
                 filter.append(table.statdate.like(param['statdate'] + '%'))
         if len(param['property']):
             filter.append(table.property.in_(param['property']))
+        if len(param['stattype']):
+            stattype = self.stattype_map__[param['stattype'][0]]
+            filter.append(table.stattype == stattype)
         inter_list = []
         if len(param['intervals']):
             if param['arrange'] in ['amount', 'price', 'area']:
@@ -139,10 +146,12 @@ class Project(Resource):
                 continue
             count = 0.0
             for dataset_itr in itr.dataset_area:
-                if stattype == u'sale':
-                    count += float(dataset_itr.area)
-                elif stattype == u'price':
+                if stattype[1] == u'amount':
                     count += float(dataset_itr.amount)
+                elif stattype[1] == u'price':
+                    count += float(dataset_itr.number)
+                elif stattype[1] == u'area':
+                    count += float(dataset_itr.area)
             project = copy.deepcopy(self.project__)
             project['name'] = itr.pro_name
             project['lat'] = itr.pro_lat

@@ -10,6 +10,7 @@ from common.utils import db
 from resources.users import authen_callback, identity_callback, response_callback, payload_callback
 from resources.users import UserManager, UserRegister
 from resources.project_info import Project
+from resources.project_menus import ProjectMenus
 
 app = Flask(__name__)
 app.config.from_object('config.ProductionConfig')
@@ -25,7 +26,7 @@ api = Api(app)
 api.add_resource(UserManager, '/apiserver/usermanager/<string:uuid>')
 api.add_resource(UserRegister, '/apiserver/userigister')
 api.add_resource(Project, '/apiserver/dataset')
-
+api.add_resource(ProjectMenus, '/apiserver/menus/<string:menu_name>')
 
 if __name__ == '__main__':
     logpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log')
