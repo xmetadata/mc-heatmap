@@ -343,7 +343,7 @@ if __name__ == "__main__":
         'select * from t_options_data where opt_key = "spider_at"', fetchone=True)
     spider_at = datetime.strptime(results[2], "%Y-%m-%d")
     days = (datetime.now() + timedelta(days=STATGAP) - spider_at).days
-    for num in range(1, days):
+    for num in range(1, days - 14):
         statdate = spider_at + timedelta(days=num)
         sync_dataset(spider_args, statdate)
         sql = 'update t_options_data set opt_value = "%s" where opt_key = "spider_at"' % statdate.strftime(

@@ -3,7 +3,7 @@ import datetime
 
 import MySQLdb
 
-from config import DB, logger
+from config.config import DB, logger
 
 
 def db_query(sqli, fetchone=False):

@@ -110,7 +110,7 @@ def download_dataset(param):
             '(uuid, stattype, statdate, pro_uuid, city, scope, property, arrange, number, area, amount) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
         db_exec(sql, data)
 
-def none_sync(spider_args, statdate):
+def sub_sync(spider_args, statdate):
     logger.info('Synchronize dataset start...')
     logger.info('StatDate: ' + statdate.strftime("%Y-%m-%d"))
     pool = Pool(POOLSIZE)
@@ -123,24 +123,115 @@ def none_sync(spider_args, statdate):
                 continue
             for property in spider_args['property']:
                 logger.info('Property: ' + property)
-                # 不排序
+                # 按房型排序
+                logger.info('Arrange: room')
+                for item in spider_args['arrange']['room']:
+                    param = {
+                        "statdate": statdate,
+                        "city": city,
+                        "stattype": stattype,
+                        "property": property,
+                        "arrange": {
+                            "type": "room",
+                            "room": item
+                        }
+                    }
+                    pool.spawn(download_dataset, param)
+
+                # 按面积排序
+                logger.info('Arrange: area')
+                for item in range(spider_args['arrange']['area'][0], spider_args['arrange']['area'][1], spider_args['arrange']['area'][2]):
+                    param = {
+                        "statdate": statdate,
+                        "city": city,
+                        "stattype": stattype,
+                        "property": property,
+                        "arrange": {
+                            "type": "area",
+                            "from": item,
+                            "to": item + spider_args['arrange']['area'][2] - 1
+                        }
+                    }
+                    pool.spawn(download_dataset, param)
                 param = {
                     "statdate": statdate,
                     "city": city,
                     "stattype": stattype,
                     "property": property,
                     "arrange": {
-                        "type": "",
+                        "type": "area",
+                        "from": spider_args['arrange']['area'][1],
+                        "to": ""
                     }
                 }
                 pool.spawn(download_dataset, param)
+
+                # 成交情况 需要按照单价和总价统计
+                if stattype == u'成交情况':
+                    # 按价格排序
+                    logger.info('Arrange: price')
+                    for item in range(spider_args['arrange']['price'][0], spider_args['arrange']['price'][1], spider_args['arrange']['price'][2]):
+                        param = {
+                            "statdate": statdate,
+                            "city": city,
+                            "stattype": stattype,
+                            "property": property,
+                            "arrange": {
+                                "type": "price",
+                                "from": item,
+                                "to": item + spider_args['arrange']['price'][2] - 1
+                            }
+                        }
+                        pool.spawn(download_dataset, param)
+                    param = {
+                        "statdate": statdate,
+                        "city": city,
+                        "stattype": stattype,
+                        "property": property,
+                        "arrange": {
+                            "type": "price",
+                            "from": spider_args['arrange']['price'][1],
+                            "to": ""
+                        }
+                    }
+                    pool.spawn(download_dataset, param)
+
+                    # 按总价排序
+                    logger.info('Arrange: amount')
+                    for item in range(spider_args['arrange']['amount'][0], spider_args['arrange']['amount'][1], spider_args['arrange']['amount'][2]):
+                        param = {
+                            "statdate": statdate,
+                            "city": city,
+                            "stattype": stattype,
+                            "property": property,
+                            "arrange": {
+                                "type": "amount",
+                                "from": item,
+                                "to": item + spider_args['arrange']['amount'][2] - 1
+                            }
+                        }
+                        pool.spawn(download_dataset, param)
+                    param = {
+                        "statdate": statdate,
+                        "city": city,
+                        "stattype": stattype,
+                        "property": property,
+                        "arrange": {
+                            "type": "amount",
+                            "from": spider_args['arrange']['amount'][1],
+                            "to": ""
+                        }
+                    }
+                    pool.spawn(download_dataset, param)
     pool.join()
     logger.info('Synchronize dataset finish.  ' +
                 statdate.strftime("%Y-%m-%d"))
 
+
+
 @app.task
-def proj_none(spider_at, days):
-    sql = 'update t_options_data set opt_value = 1 where opt_key = "spider_none_status"'
+def proj_subtask():
+    sql = 'update t_options_data set opt_value = 1 where opt_key = "spider_status"'
     db_exec(sql)
     # 获取爬虫参数
     results = db_query(
@@ -155,7 +246,7 @@ def proj_none(spider_at, days):
     days = (datetime.now() + timedelta(days=STATGAP) - spider_at).days
     for num in range(1, days - 14):
         statdate = spider_at + timedelta(days=num)
-        none_sync(spider_args, statdate)
+        sub_sync(spider_args, statdate)
         sql = 'update t_options_data set opt_value = "%s" where opt_key = "spider_at"' % statdate.strftime(
             "%Y-%m-%d")
         db_exec(sql)
