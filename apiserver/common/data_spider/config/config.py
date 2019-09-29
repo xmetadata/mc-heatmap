@@ -6,7 +6,7 @@ app = Celery('celeryapp')
 app.config_from_object('config.celery_config')
 
 logging.basicConfig(level=logging.DEBUG,
-                    filename='/home/synctask.log',
+                    filename='synctask.log',
                     filemode='a',
                     format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
                     )

@@ -4,6 +4,7 @@ import requests
 from config.config import CURRENT_PROJECT, HEADERS, POOLSIZE, PROJECT_PAYLOAD, STATGAP, TEST_PAYLOAD, logger
 from common.utils import db_exec, db_query, is_float, last_day_of_month
 from tasks.proj_sync import proj_sync
+from tasks.proj_subtask import proj_subtask
 from config.config import app
 
 @app.task

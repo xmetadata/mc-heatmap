@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 import json
 from uuid import uuid1
 import requests
-from celeryapp import app
 from config.config import logger, HEADERS, PROJECT_PAYLOAD, TEST_PAYLOAD, STATGAP, POOLSIZE, CURRENT_PROJECT
 from common.utils import db_exec, db_query, is_float, last_day_of_month
 from gevent import monkey
 from gevent.pool import Pool
+from config.config import app
 
 def download_dataset(param):
     collector = []
@@ -227,8 +227,7 @@ def sub_sync(spider_args, statdate):
     logger.info('Synchronize dataset finish.  ' +
                 statdate.strftime("%Y-%m-%d"))
 
-
-
+@app.task
 def proj_subtask():
     sql = 'update t_options_data set opt_value = 1 where opt_key = "spider_status"'
     db_exec(sql)
