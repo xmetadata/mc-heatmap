@@ -1,17 +1,18 @@
 # -*- coding: UTF-8 -*-
 import requests
 import json
-import timeit
+#import timeit
 from datetime import datetime, timedelta
 from uuid import uuid1
 from urllib2 import unquote, quote
 from celeryapp import app
 from config.config import logger, HEADERS, PROJECT_PAYLOAD, TEST_PAYLOAD, STATGAP, CURRENT_PROJECT
 from common.utils import db_exec, db_query, is_float
+from config.config import app
 from proj_none import proj_none
-from proj_subtask import proj_subtask
+#from proj_subtask import proj_subtask
 
-#@app.task
+@app.task
 def proj_sync():
     logger.info('Synchronize project start...')
     # 获取已入库项目列表
@@ -64,6 +65,5 @@ def proj_sync():
     for row in results:
         CURRENT_PROJECT[row[1]] = row[0]
     logger.info('Synchronize project finish.')
-    #proj_none.delay()
+    proj_none.delay()
     #proj_subtask.delay()
-    logger.info('Project sync Finish.')

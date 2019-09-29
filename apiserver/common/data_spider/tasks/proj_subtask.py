@@ -229,7 +229,6 @@ def sub_sync(spider_args, statdate):
 
 
 
-@app.task
 def proj_subtask():
     sql = 'update t_options_data set opt_value = 1 where opt_key = "spider_status"'
     db_exec(sql)

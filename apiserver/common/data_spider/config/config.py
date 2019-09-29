@@ -1,12 +1,16 @@
 # -*- coding: UTF-8 -*-
 import logging
+from celery import Celery
 
-logging.basicConfig(level=logging.INFO,
-                    filename='synctask.log',
+app = Celery('celeryapp')
+app.config_from_object('config.celery_config')
+
+logging.basicConfig(level=logging.DEBUG,
+                    filename='/home/synctask.log',
                     filemode='a',
                     format='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'
                     )
-logger = logging.getLogger('synctask')
+logger = logging.getLogger(__name__)
 
 DB = {
     'host': '47.103.36.82',
