@@ -6,7 +6,7 @@ from flask_jwt import current_identity, jwt_required
 from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
 
-from common.utils import pretty_response
+from common.utils import pretty_response, StandardResponse
 from models.options import OptionsModel, OptionsSchema
 
 
@@ -57,50 +57,56 @@ class OptionsList(Resource):
 
 class Options(Resource):
     @jwt_required()
-    def get(self, uuid):
+    def get(self):
         """ Query specific instance """
         if current_identity.roles not in ['super']:
             return pretty_response(403)
-        options_instance = OptionsModel.query.get_or_404(uuid)
-        options_dump, errors = OptionsSchema().dump(options_instance)
-        return pretty_response(200, options_dump)
+        options_instance = None
+        try:
+            if request.args.get('opt_key'):
+                options_instance = OptionsModel.query.filter(OptionsModel.opt_key == request.args.get('opt_key')).first()
+            else:
+                return StandardResponse(40001, 1, u'Invalid Request Parameters')
+        except Exception, e:
+            return StandardResponse(50001, 1, u'SQLAlchemy Error')
+        return StandardResponse(200, 0, data = options_instance.opt_value)
 
     @jwt_required()
     def post(self):
         """ Update specific instance """
         return pretty_response(405)
 
-    @jwt_required()
-    def put(self, uuid):
-        """ Update specific instance """
-        if current_identity.roles not in ['super']:
-            return pretty_response(403)
-        options_instance = OptionsModel.query.get_or_404(uuid)
-        try:
-            jsondata = request.get_json()
-            data, errors = OptionsSchema().load(jsondata)
-            if errors:
-                current_app.logger.error(errors)
-                return pretty_response(40003)
-            for key, val in jsondata.items():
-                setattr(options_instance, key, val)
-            options_instance.updatetime = datetime.now()
-            options_instance.update()
-            options_dump, errors = OptionsSchema().dump(options_instance)
-            return pretty_response(200, options_dump)
-        except SQLAlchemyError as e:
-            current_app.logger.error(e)
-            return pretty_response(50001)
-
-    @jwt_required()
-    def delete(self, uuid):
-        """ Delete specific instance """
-        if current_identity.roles not in ['super']:
-            return pretty_response(403)
-        options_instance = OptionsModel.query.get_or_404(uuid)
-        try:
-            options_instance.delete(options_instance)
-            return pretty_response(20003)
-        except SQLAlchemyError as e:
-            current_app.logger.error(e)
-            pretty_response(50001)
+    # @jwt_required()
+    # def put(self, uuid):
+    #     """ Update specific instance """
+    #     if current_identity.roles not in ['super']:
+    #         return pretty_response(403)
+    #     options_instance = OptionsModel.query.get_or_404(uuid)
+    #     try:
+    #         jsondata = request.get_json()
+    #         data, errors = OptionsSchema().load(jsondata)
+    #         if errors:
+    #             current_app.logger.error(errors)
+    #             return pretty_response(40003)
+    #         for key, val in jsondata.items():
+    #             setattr(options_instance, key, val)
+    #         options_instance.updatetime = datetime.now()
+    #         options_instance.update()
+    #         options_dump, errors = OptionsSchema().dump(options_instance)
+    #         return pretty_response(200, options_dump)
+    #     except SQLAlchemyError as e:
+    #         current_app.logger.error(e)
+    #         return pretty_response(50001)
+    #
+    # @jwt_required()
+    # def delete(self, uuid):
+    #     """ Delete specific instance """
+    #     if current_identity.roles not in ['super']:
+    #         return pretty_response(403)
+    #     options_instance = OptionsModel.query.get_or_404(uuid)
+    #     try:
+    #         options_instance.delete(options_instance)
+    #         return pretty_response(20003)
+    #     except SQLAlchemyError as e:
+    #         current_app.logger.error(e)
+    #         pretty_response(50001)

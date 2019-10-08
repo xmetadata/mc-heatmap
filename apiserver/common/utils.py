@@ -27,7 +27,7 @@ def StandardResponse(code = 200, errcode = 0, errmsg = '', data = None):
     instance = {'errcode': errcode, 'errmsg': errmsg, 'data': ''}
     if errcode == 0 and data:
         instance['data'] = data
-    return json.dumps(instance), code
+    return instance, code
 
 def pretty_response(code, data=None):
     message = {

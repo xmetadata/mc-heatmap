@@ -14,56 +14,26 @@ from models.projects import ProjectsModel, ProjectsSchema
 
 class UserManager(Resource):
     @jwt_required()
-    def get(self, uuid):
+    def get(self):
         # search interface
-        if current_identity.roles not in ['super'] and \
-                uuid != current_identity.id:
-            return StandardResponse(403, 1, '非管理员, 无权限')
-        user_instance = UsersModel.find_by_id(uuid)
-        user_dump, errors = UsersSchema().dump(user_instance)
-        if errors:
-            return StandardResponse(404, 1, '不能找到指定用户')
+        try:
+            user_instance = UsersModel.find_by_id(current_identity.id)
+            user_dump, errors = UsersSchema().dump(user_instance)
+            if errors:
+                return StandardResponse(404, 1, u'Resource Not Found')
+        except Exception, e:
+            return StandardResponse(50001, 1, u'SQLAlchemy Error')
         return StandardResponse(200, 0, data=user_dump)
 
     @jwt_required()
     def put(self, uuid):
         # update interface
-        try:
-            users_instance = UsersModel.query.get_or_404(uuid)
-            if not users_instance:
-                return StandardResponse(404, 1, '无效的用户ID')
-            json_data = request.get_json()
-            data, errors = UsersSchema().load(json_data)
-            if errors:
-                current_app.logger.error(errors)
-                return StandardResponse(500, 1, '用户序列化失败')
-            for key, value in json_data.items():
-                setattr(users_instance, key, value)
-            users_instance.updatetime = datetime.now()
-            users_instance.update()
-            users_dump, errors = UsersSchema().dump(users_instance)
-            if errors:
-                users_instance.roolback()
-                return StandardResponse(500, 1, '更新用户序列化失败')
-            return StandardResponse(200, 0, data=users_dump)
-        except SQLAlchemyError as e:
-            current_app.logger.error(e)
-            return StandardResponse(500, 1, e.message)
+        return StandardResponse(405, 1, u'Method Not Allowed')
 
     @jwt_required()
     def user_delete(self, uuid):
         # delete interface
-        if current_identity.roles not in ['super']:
-            return StandardResponse(403, 1, '非管理员，无权限')
-        try:
-            users_instance = UsersModel.query.get_or_404(uuid)
-            if not users_instance:
-                return StandardResponse(404, 1, '无效的用户ID')
-            users_instance.delete(users_instance)
-            return StandardResponse(200, 0)
-        except SQLAlchemyError as e:
-            current_app.logger.error(e)
-            return StandardResponse(500, 1, e.message)
+        return StandardResponse(405, 1, u'Method Not Allowed')
 
 class UserRegister(Resource):
     def post(self):
@@ -72,13 +42,13 @@ class UserRegister(Resource):
         user_name = req_data.get('username', None)
         user_pass = req_data.get('password', None)
         if not user_name or not user_pass:
-            return StandardResponse(406, 1, '无效的用户名或密码')
+            return StandardResponse(403, 1, 'Forbidden')
         user = UsersModel(user_name, user_pass)
         try:
             user.add(user)
         except Exception, e:
-            return StandardResponse(412, 1, e.message)
-        return StandardResponse(200)
+            return StandardResponse(50001, 1, e.message)
+        return StandardResponse(20001, 0, u'Create Success')
 
 def authen_callback(username, password):
     user = UsersModel.find_by_username(username)

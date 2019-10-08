@@ -19,7 +19,7 @@ payload:
 {
     "stattype": "sale/price",
     "datetype": "week",
-    "duration":  ["2019-09-01", "2019-09-07"],
+    "duration":  ["2019-09-01"],
     "scope": ["陕西.西安市.雁塔区"],
     "property": ["办公"],
     "arrange": "amount",
@@ -31,19 +31,20 @@ payload:
 {
     "stattype": "sale/price",
     "datetype": "month",
-    "statdate": "2019-09",
+    "statdate": "2019-09-01",
     "duration":  [],
     "scope": ["陕西.西安市.雁塔区"],
     "property": ["办公"],
     "arrange": "none",
     "intervals": [
+		one
     ]
 }
 
 {
     "stattype": "sale/price",
     "datetype": "year",
-    "statdate": "2019",
+    "statdate": "2019-01-01",
     "duration":  [  ],
     "scope": ["陕西.西安市.雁塔区"],
     "property": ["别墅"],
