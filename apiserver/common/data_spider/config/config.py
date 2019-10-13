@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger(__name__)
 
 DB = {
-    'host': '47.103.36.82',
+    'host': '106.14.174.55',
     'username': 'root',
     'password': 'Aa888888',
     'database': 'heatmap',

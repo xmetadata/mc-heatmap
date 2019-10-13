@@ -6,7 +6,8 @@ flask_script
 marshmallow
 pymysql
 pytest
-sqlalchemy
+flask_sqlalchemy
 werkzeug
 requests
 gevent
+celery

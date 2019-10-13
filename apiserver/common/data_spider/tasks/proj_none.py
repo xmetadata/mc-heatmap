@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from datetime import datetime, timedelta
+import time
 import json
 from uuid import uuid1
 import requests
@@ -69,13 +70,14 @@ def download_dataset(param):
         arrange = ''
         table = 'dataset_none'
     url = 'https://creis.fang.com/city/PropertyStatistics/DetailsAjax'
+    r_json = {}
     try:
         r = requests.post(
         url, data={'jsonParameters': json.dumps(payload)}, headers=HEADERS)
         r_json = json.loads(r.text)
     except Exception, e:
-        logger.warn("request url unsuccessfully.")
-    if r_json.has_key('result'):
+        logger.warn("request url unsuccessfully." + e.message)
+    if len(r_json) == 0 or r_json.has_key('result'):
         return
     collector.extend(r_json['Table1'])
     pages = int(int(r_json['Table'][0]['Column1'])/100)
@@ -85,6 +87,7 @@ def download_dataset(param):
             r = requests.post(
                 url, data={'jsonParameters': json.dumps(payload)}, headers=HEADERS)
             r_json = json.loads(r.text)
+            time.sleep(5)
             if r_json.has_key('result'):
                 continue
             collector.extend(r_json['Table1'])
@@ -113,7 +116,7 @@ def download_dataset(param):
 def none_sync(spider_args, statdate):
     logger.info('Synchronize dataset start...')
     logger.info('StatDate: ' + statdate.strftime("%Y-%m-%d"))
-    pool = Pool(POOLSIZE)
+    #pool = Pool(POOLSIZE)
     for city in spider_args['city']:
         logger.info('City: ' + city)
         for stattype in spider_args['stattype']:
@@ -133,12 +136,14 @@ def none_sync(spider_args, statdate):
                         "type": "",
                     }
                 }
-                pool.spawn(download_dataset, param)
-    pool.join()
+                #pool.spawn(download_dataset, param)
+                download_dataset(param)
+                time.sleep(1)
+    #pool.join()
     logger.info('Synchronize dataset finish.  ' +
                 statdate.strftime("%Y-%m-%d"))
 
-@app.task
+#@app.task
 def proj_none():
     logger.info("Enter to none sync task!")
     sql = 'update t_options_data set opt_value = 1 where opt_key = "spider_none_status"'

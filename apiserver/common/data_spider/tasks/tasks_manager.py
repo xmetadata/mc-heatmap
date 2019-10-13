@@ -7,7 +7,7 @@ from tasks.proj_sync import proj_sync
 from tasks.proj_subtask import proj_subtask
 from config.config import app
 
-@app.task
+#@app.task
 def tasks_manager():
      logger.info("enter to task preprocess!")
      # 1.获取Cookie记录
@@ -25,4 +25,4 @@ def tasks_manager():
          logger.error(r.text)
          exit()
      logger.debug("end of task initialization!")
-     proj_sync.delay()
+     proj_sync()

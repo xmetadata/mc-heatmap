@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import requests
 import json
+import time
 from datetime import datetime, timedelta
 from uuid import uuid1
 from urllib2 import unquote, quote
@@ -10,7 +11,6 @@ from config.config import app
 from proj_none import proj_none
 from proj_subtask import proj_subtask
 
-@app.task
 def proj_sync():
     logger.info('Synchronize project start...')
     # 获取已入库项目列表
@@ -44,8 +44,6 @@ def proj_sync():
                 })
             }
             r = requests.post(url, data=data, headers=HEADERS)
-            import pdb
-            pdb.set_trace()
             r_json = json.loads(r.text)
             for project in r_json['Table']:
                 if project['title'] not in has_project:
@@ -54,6 +52,7 @@ def proj_sync():
                         if is_float(project['y']) and is_float(project['y']):
                             disc_project.append((uuid1().hex, project['title'], unquote(project['address'].encode(
                                 'UTF-8', 'ignore')).decode('UTF-8', 'ignore'), round(float(project['x']), 6), round(float(project['y']), 6)))
+            time.sleep(5)
     # 入库新项目
     sql = 'insert into projects(pro_uuid, pro_name, pro_address, pro_lat, pro_lng) values(%s, %s, %s, %s, %s)'
     db_exec(sql, executemany=disc_project)
@@ -65,5 +64,11 @@ def proj_sync():
     for row in results:
         CURRENT_PROJECT[row[1]] = row[0]
     logger.info('Synchronize project finish.')
-    proj_none.delay()
-    proj_subtask.delay()
+    sql = "select opt_value from t_options_data where opt_key = 'spider_task_info'"
+    results = db_query(sql)
+    task_info = json.loads(results[0][0])
+    task_info['none']['id'] = 1#proj_none.delay()
+    proj_none()
+    task_info['subtask']['id'] = 2# proj_subtask.delay()
+    sql = "update t_options_data set opt_value = '%s' where opt_key = 'spider_task_info'" %(json.dumps(task_info))
+    db_exec(sql)
