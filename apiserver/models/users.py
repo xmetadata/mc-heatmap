@@ -8,7 +8,7 @@ from common.utils import CRUD, db, get_uuid
 
 
 class UsersModel(db.Model, CRUD):
-    __tablename__ = "t_users_data"
+    __tablename__ = "users"
     __table_args__ = {
         'mysql_charset': 'utf8'
     }

@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 from uuid import uuid1
 import json
+import datetime
+import calendar
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -57,3 +59,9 @@ def pretty_response(code, data=None):
 
 def get_uuid():
     return uuid1().hex
+
+def GetMonFirstLast(year, month):
+    firstDayWeekDay, monthRange = calendar.monthrange(year, month)
+    first_day = datetime.date(year=year, month=month, day=1)
+    last_day  = datetime.date(year=year, month=month, day=monthRange)
+    return first_day, last_day

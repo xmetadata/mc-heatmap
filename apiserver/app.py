@@ -13,6 +13,7 @@ from resources.users import UserManager, UserRegister
 from resources.project_info import Project
 from resources.project_mgr import ProjectMgr, ProjectCtl
 from resources.options import Options
+from resources.spider_ctl import SpiderCtl
 
 app = Flask(__name__)
 app.config.from_object('config.ProductionConfig')
@@ -32,6 +33,7 @@ api.add_resource(Project, '/apiserver/dataset')
 api.add_resource(Options, '/apiserver/options')
 api.add_resource(ProjectMgr, '/apiserver/project')
 api.add_resource(ProjectCtl, '/apiserver/project/<string:uuid>')
+api.add_resource(SpiderCtl, '/apiserver/task')
 
 if __name__ == '__main__':
     logpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'log')

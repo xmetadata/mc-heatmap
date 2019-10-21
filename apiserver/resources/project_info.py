@@ -10,7 +10,7 @@ from flask_restful import Resource, request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, or_
 
-from common.utils import StandardResponse
+from common.utils import StandardResponse, GetMonFirstLast
 from models.projects import ProjectsModel, ProjectsSchema
 from models.dataset_rg_amount import DatasetAmountModel, DatasetAmountSchema
 from models.dataset_rg_area import DatasetAreaModel, DatasetAreaSchema
@@ -79,24 +79,40 @@ class Project(Resource):
             param['endtm'] = request['statdate'][1]
         else:
             if request['datetype'] == 'week':
-                start_tm = time.strptime(request['statdate'], "%Y-%m-%d")
-                param['starttm'] = request['statdate']
+                start_tm = time.strptime(request['statdate'][0], "%Y-%m-%d")
+                param['starttm'] = request['statdate'][0]
                 end_tm = datetime(start_tm.tm_year, start_tm.tm_mon, start_tm.tm_mday) + timedelta(days=6)
                 param['endtm'] = end_tm.strftime("%Y-%m-%d")
             elif request['datetype'] == 'month':
-                start_tm = time.strptime(request['statdate'], "%Y-%m-%d")
-                date_tm = datetime(start_tm.tm_year, start_tm.tm_mon, start_tm.tm_mday)
-                param['statdate'] = date_tm.strftime("%Y-%m")
+                if len(request['statdate'][1]) == 0:
+                    start_tm = time.strptime(request['statdate'][0], "%Y-%m-%d")
+                    first_day, last_day = GetMonFirstLast(start_tm.tm_year, start_tm.tm_mon)
+                    param['starttm'] = first_day.strftime("%Y-%m-%d")
+                    param['endtm'] = last_day.strftime("%Y-%m-%d")
+                else:
+                    start_tm = time.strptime(request['statdate'][0], "%Y-%m-%d")
+                    first_s, last_s = GetMonFirstLast(start_tm.tm_year, start_tm.tm_mon)
+                    param['starttm'] = first_s.strftime("%Y-%m-%d")
+                    end_tm = time.strptime(request['statdate'][1], "%Y-%m-%d")
+                    first_e, last_e = GetMonFirstLast(end_tm.tm_year, end_tm.tm_mon)
+                    param['endtm'] = last_e.strftime("%Y-%m-%d")
             else:
-                start_tm = time.strptime(request['statdate'], "%Y-%m-%d")
-                date_tm = datetime(start_tm.tm_year, start_tm.tm_mon, start_tm.tm_mday)
-                param['statdate'] = date_tm.strftime("%Y")
+                date_tm = time.strptime(request['statdate'][0], "%Y-%m-%d")
+                start_tm = datetime(date_tm.tm_year, 1, 1)
+                end_tm = datetime(date_tm.tm_year, 12, 31)
+                param['starttm'] = start_tm.strftime("%Y-%m-%d")
+                param['endtm'] = end_tm.strftime("%Y-%m-%d")
         param['stattype'] = request['stattype']
         param['property'] = request['property']
         param['arrange'] = request['arrange']
 
         if data_type in ['amount', 'price', 'area']:
-            param['intervals'] = request['intervals'].split(':')
+            split_list = request['intervals'].split(':')
+            if len(split_list[0]) == 0:
+                split_list[0] = 0
+            elif len(split_list[1]) == 0:
+                split_list[1] = 3000000
+            param['intervals'] = split_list
         elif data_type == 'room':
             param['intervals'] = request['intervals']
         return param
@@ -109,10 +125,8 @@ class Project(Resource):
             filter.append(table.city == param['city'])
         if param['district']:
             filter.append(table.scope == param['district'])
-        if param['datetype'] in ['day', 'week']:
+        if param['starttm'] and param['endtm']:
             filter.append(table.statdate.between(param['starttm'], param['endtm']))
-        else:
-            filter.append(table.statdate.like(param['statdate'] + '%'))
         if param['property']:
             filter.append(table.property == param['property'])
         if len(param['stattype']):
@@ -137,28 +151,37 @@ class Project(Resource):
         for itr in result:
             if not itr.dataset_area:
                 continue
-            count = 0.0
+            amount = 0.0
+            area = 0.0
+            number = 0.0
             for dataset_itr in itr.dataset_area:
-                if stattype[1] == u'amount':
-                    count += float(dataset_itr.amount)
-                elif stattype[1] == u'price':
-                    count += float(dataset_itr.number)
-                elif stattype[1] == u'area':
-                    count += float(dataset_itr.area)
-            if max_project < count:
-                max_project = count
+                amount += dataset_itr.amount * 10000
+                area += dataset_itr.area
+                number += dataset_itr.number
             project = copy.deepcopy(self.project__)
             project['name'] = itr.pro_name
-            project['lat'] = itr.pro_lat
-            project['lng'] = itr.pro_lng
+            project['lat'] = float(itr.pro_lat)
+            project['lng'] = float(itr.pro_lng)
             project['address'] = itr.pro_address
+            count = 0.0
+            if stattype[1] == u'amount':
+                count = amount
+            elif stattype[1] == u'price':
+                count = amount * 10000 / area if area != 0 else 0.0
+            elif stattype[1] == u'area':
+                count = area
+            elif stattype[1] == u'number':
+                count = number
+            if max_project < count:
+                max_project = count
             project['count'] = count
             projects.append(project)
         if not len(projects):
             return StandardResponse(200, 0, u'Found Nothing')
-        self.result__['data'] = projects
-        self.result__['max'] = max_project
-        return StandardResponse(200, 0, data = self.result__)
+        result = copy.deepcopy(self.result__)
+        result['data'] = projects
+        result['max'] = max_project
+        return StandardResponse(200, 0, data = result)
 
     def __ProcessAmount(self, request):
         param = self.__GenerateParam(request, 'amount')
