@@ -32,7 +32,7 @@ class ProjectMgr(Resource):
             self.project_page__["page_size"] = int(request.args.get('_limit'))
             pro_name = request.args.get('pro_name')
             projects = None
-            if pro_name == "":
+            if not pro_name or len(pro_name) == u"":
                 self.project_page__["total"] = ProjectsModel.query.count()
                 projects = ProjectsModel.query.paginate(
                     self.project_page__["page_index"], per_page=self.project_page__["page_size"], error_out=False)
@@ -45,11 +45,11 @@ class ProjectMgr(Resource):
                 project["name"] = itr.pro_name
                 project["address"] = itr.pro_address
                 project["uuid"] = itr.pro_uuid
-                project['lng'] = float(itr.pro_lng)
-                project['lat'] = float(itr.pro_lat)
+                project['lng'] = float(itr.pro_lng) if itr.pro_lng else 0.0
+                project['lat'] = float(itr.pro_lat) if itr.pro_lat else 0.0
                 self.project_page__["list"].append(project)
         except Exception, e:
-            return StandardResponse(500, 1, u'SQLAlchemy Error')
+            return StandardResponse(500, 1, e.message)
         return StandardResponse(200, 0, data = self.project_page__)
 
     @jwt_required()
