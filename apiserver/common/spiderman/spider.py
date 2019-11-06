@@ -22,7 +22,7 @@ def initialize_browser():
     # chrome_options.add_argument('--headless')  # 增加无界面选项
     # 启动浏览器
     browser = webdriver.Chrome(
-        'C:\Python36\Scripts\chromedriver.exe', chrome_options=chrome_options)
+        r'D:\Python37\Scripts\chromedriver.exe', chrome_options=chrome_options)
     browser.implicitly_wait(3)  # 隐性等待时间3秒
     browser.get('https://creis.fang.com/')
     for cookie in COOKIES:
