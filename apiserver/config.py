@@ -21,7 +21,9 @@ class ProductionConfig(Config):
     # MySQL
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Aa888888@47.103.36.82:3306/heatmap?charset=utf8'
-
+    SQLALCHEMY_POOL_SIZE = 20
+    SQLALCHEMY_POOL_TIMEOUT = 5
+    SQLALCHEMY_MAX_OVERFLOW = 10
 
 class DevelopmentConfig(Config):
     # Server

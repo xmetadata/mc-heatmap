@@ -16,13 +16,16 @@ class OptionsList(Resource):
         """ Query all instances """
         if current_identity.roles not in ['super']:
             return pretty_response(403)
-        if request.args.get('opt_key'):
-            options_list = OptionsModel.query.filter_by(
-                opt_key=request.args.get('opt_key')).all()
-        else:
-            options_list = OptionsModel.query.all()
-        options_dump, errors = OptionsSchema(many=True).dump(options_list)
-        return pretty_response(200, options_dump)
+        try:
+            if request.args.get('opt_key'):
+                options_list = OptionsModel.query.filter_by(
+                    opt_key=request.args.get('opt_key')).all()
+            else:
+                options_list = OptionsModel.query.all()
+            options_dump, errors = OptionsSchema(many=True).dump(options_list)
+            return pretty_response(200, options_dump)
+        except Exception, e:
+            return pretty_response(500, 1, e.message)
 
     @jwt_required()
     def post(self):
@@ -31,20 +34,20 @@ class OptionsList(Resource):
             return pretty_response(403)
         jsondata = request.get_json()
         if not jsondata or 'opt_key' not in jsondata:
-            return pretty_response(40001)
+            return pretty_response(400)
         if OptionsModel.query.filter_by(opt_key=jsondata['opt_key']).first():
-            return pretty_response(40002)
+            return pretty_response(400)
         try:
             options_instance, errors = OptionsSchema().load(jsondata)
             if errors:
                 current_app.logger.error(errors)
-                return pretty_response(40003)
+                return pretty_response(400)
             options_instance.add(options_instance)
             options_dump, errors = OptionsSchema().dump(options_instance)
             return pretty_response(200, options_dump)
         except SQLAlchemyError as e:
             current_app.logger.error(e)
-            return pretty_response(50001)
+            return pretty_response(500)
 
     def put(self):
         """ Update multi-instances """
@@ -66,9 +69,11 @@ class Options(Resource):
             if request.args.get('opt_key'):
                 options_instance = OptionsModel.query.filter(OptionsModel.opt_key == request.args.get('opt_key')).first()
             else:
-                return StandardResponse(40001, 1, u'Invalid Request Parameters')
+                return StandardResponse(400, 1, u'Invalid Request Parameters')
         except Exception, e:
-            return StandardResponse(50001, 1, u'SQLAlchemy Error')
+            return StandardResponse(500, 1, u'SQLAlchemy Error')
+        if not options_instance:
+            return StandardResponse(500, 1, u'Invalid request Parameters')
         return StandardResponse(200, 0, data = options_instance.opt_value)
 
     @jwt_required()

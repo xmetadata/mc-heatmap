@@ -22,7 +22,7 @@ class UserManager(Resource):
             if errors:
                 return StandardResponse(404, 1, u'Resource Not Found')
         except Exception, e:
-            return StandardResponse(50001, 1, u'SQLAlchemy Error')
+            return StandardResponse(500, 1, u'SQLAlchemy Error')
         return StandardResponse(200, 0, data=user_dump)
 
     @jwt_required()
@@ -47,8 +47,8 @@ class UserRegister(Resource):
         try:
             user.add(user)
         except Exception, e:
-            return StandardResponse(50001, 1, e.message)
-        return StandardResponse(20001, 0, u'Create Success')
+            return StandardResponse(500, 1, e.message)
+        return StandardResponse(200, 0, u'Create Success')
 
 def authen_callback(username, password):
     user = UsersModel.find_by_username(username)

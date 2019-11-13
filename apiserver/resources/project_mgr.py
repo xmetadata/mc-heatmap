@@ -28,18 +28,19 @@ class ProjectMgr(Resource):
         if not request.args.get('_page') or not request.args.get('_limit'):
             return StandardResponse(400, 1, u'Invalid Request Parameters')
         try:
-            self.project_page__["page_index"] = int(request.args.get('_page'))
-            self.project_page__["page_size"] = int(request.args.get('_limit'))
+            project_page = copy.deepcopy(self.project_page__)
+            project_page["page_index"] = int(request.args.get('_page'))
+            project_page["page_size"] = int(request.args.get('_limit'))
             pro_name = request.args.get('pro_name')
             projects = None
             if not pro_name or len(pro_name) == u"":
-                self.project_page__["total"] = ProjectsModel.query.count()
+                project_page["total"] = ProjectsModel.query.count()
                 projects = ProjectsModel.query.paginate(
-                    self.project_page__["page_index"], per_page=self.project_page__["page_size"], error_out=False)
+                    project_page["page_index"], per_page=project_page["page_size"], error_out=False)
             else:
-                self.project_page__["total"] = ProjectsModel.query.filter(ProjectsModel.pro_name.like('%' + pro_name + '%')).count()
+                project_page["total"] = ProjectsModel.query.filter(ProjectsModel.pro_name.like('%' + pro_name + '%')).count()
                 projects = ProjectsModel.query.filter(ProjectsModel.pro_name.like('%' + pro_name + '%')).paginate(
-                    self.project_page__["page_index"], per_page=self.project_page__["page_size"], error_out=False)
+                    project_page["page_index"], per_page=project_page["page_size"], error_out=False)
             for itr in projects.items:
                 project = copy.deepcopy(self.project__)
                 project["name"] = itr.pro_name
@@ -47,10 +48,10 @@ class ProjectMgr(Resource):
                 project["uuid"] = itr.pro_uuid
                 project['lng'] = float(itr.pro_lng) if itr.pro_lng else 0.0
                 project['lat'] = float(itr.pro_lat) if itr.pro_lat else 0.0
-                self.project_page__["list"].append(project)
+                project_page["list"].append(project)
         except Exception, e:
             return StandardResponse(500, 1, e.message)
-        return StandardResponse(200, 0, data = self.project_page__)
+        return StandardResponse(200, 0, data = project_page)
 
     @jwt_required()
     def put(self):
@@ -61,12 +62,15 @@ class ProjectMgr(Resource):
            not req_data.has_key("name") or \
            not req_data.has_key("address"):
             return StandardResponse(400, 1, u"无效的请求参数")
-        project = ProjectsModel.query.filter(ProjectsModel.pro_uuid == req_data["project"]).fetchone()
-        if not project:
-            return StandardResponse(500, 1, u"无法更新目标数据")
-        project.pro_name = req_data["name"]
-        project.pro_address = req_data["address"]
-        project.update()
+        try:
+            project = ProjectsModel.query.filter(ProjectsModel.pro_uuid == req_data["project"]).fetchone()
+            if not project:
+                return StandardResponse(500, 1, u"无法更新目标数据")
+            project.pro_name = req_data["name"]
+            project.pro_address = req_data["address"]
+            project.update()
+        except Exception, e:
+            return StandardResponse(500, 1, e.message)
         return StandardResponse(200, 0, u"Delete Success")
 
     @jwt_required()
@@ -76,10 +80,13 @@ class ProjectMgr(Resource):
             return StandardResponse(400, 1, u"无效的请求参数")
         if not req_data.has_key("project"):
             return StandardResponse(400, 1, u"无效的请求参数")
-        project = ProjectsModel.query.filter(ProjectsModel.pro_uuid == req_data["project"]).fetchone()
-        if not project:
-            return StandardResponse(500, 1, u"无法更新目标数据")
-        project.delete()
+        try:
+            project = ProjectsModel.query.filter(ProjectsModel.pro_uuid == req_data["project"]).fetchone()
+            if not project:
+                return StandardResponse(500, 1, u"无法更新目标数据")
+            project.delete()
+        except Exception, e:
+            return StandardResponse(500, 1, e.message)
         return StandardResponse(200, 0, u'Update Success')
 
 class ProjectCtl(Resource):

@@ -74,7 +74,7 @@ class Project(Resource):
         param['city'] = request['city']
         param['district'] = request['district']
         param['datetype'] = request['datetype']
-        if request['datetype'] in ['day']:
+        if request['datetype'] in ['daterange']:
             param['starttm'] = request['statdate'][0]
             param['endtm'] = request['statdate'][1]
         else:
@@ -124,22 +124,22 @@ class Project(Resource):
             filter.append(table.city == param['city'])
         if param['district']:
             filter.append(table.scope == param['district'])
-        if param['datetype'] in ['day', 'week']:
+        if param['datetype'] in ['daterange', 'week']:
             filter.append(table.datetype == 'day')
         elif param['datetype'] in ['monthrange', 'month', 'year']:
             filter.append(table.datetype == 'month')
         else:
             filter.append(table.datetype == 'month')
         if param['starttm'] and param['endtm']:
-            filter.append(table.statdate.between(param['starttm'], param['endtm']))
+            filter.append(table.statdate >= param['starttm'])
+            filter.append(table.statdate <= param['endtm'])
         if param['property']:
             filter.append(table.property == param['property'])
-        if len(param['stattype']):
+        if len(param['stattype']) != 0:
             stattype = self.stattype_map__[param['stattype'][0]]
             filter.append(table.stattype == stattype)
         if len(param['intervals']) != 0:
             if param['arrange'] in ['amount', 'price', 'area']:
-                #inter = table.intervals.between(param['intervals'][0], param['intervals'][1])
                 filter.append(table.intervals >= int(param['intervals'][0]))
                 filter.append(table.intervals < int(param['intervals'][1]))
             else:
@@ -151,61 +151,51 @@ class Project(Resource):
     def __ProcessResult(self, result, param):
         if not result:
             return StandardResponse(200, 0, u'Found Nothing')
-        projects = []
+        projects_map = {}
         max_project = 0.0
         for itr in result:
-            subject = None
-            if len(param['arrange']) == 0:
-                if not itr.dataset_none:
-                    continue
+            try:
+                if itr.project.pro_name in projects_map:
+                    projects_map[itr.project.pro_name]['amount'] += itr.amount
+                    projects_map[itr.project.pro_name]['area'] += itr.area
+                    projects_map[itr.project.pro_name]['number'] += itr.number
                 else:
-                    subject = itr.dataset_none
-            if param['arrange'] == 'room':
-                if not itr.dataset_room:
-                    continue
-                else:
-                    subject = itr.dataset_room
-            if param['arrange'] == 'price':
-                if not itr.dataset_price:
-                    continue
-                else:
-                    subject = itr.dataset_price
-            if param['arrange'] == 'area':
-                if not itr.dataset_area:
-                    continue
-                else:
-                    subject = itr.dataset_area
-            if param['arrange'] == 'amount':
-                if not itr.dataset_amount:
-                    continue
-                else:
-                    subject = itr.dataset_amount
-            amount = 0.0
-            area = 0.0
-            number = 0.0
-            for dataset_itr in subject:
-                amount += dataset_itr.amount * 10000
-                area += dataset_itr.area
-                number += dataset_itr.number
-            project = copy.deepcopy(self.project__)
-            project['name'] = itr.pro_name
-            project['lat'] = float(itr.pro_lat) if itr.pro_lat else 0.0
-            project['lng'] = float(itr.pro_lng) if itr.pro_lng else 0.0
-            project['address'] = itr.pro_address
-            count = 0.0
-            if param['stattype'][1] == u'amount':
-                count = amount
-            elif param['stattype'][1] == u'price':
-                count = int(amount / area) if area != 0 else 0
-            elif param['stattype'][1] == u'area':
-                count = area
-            elif param['stattype'][1] == u'number':
-                count = number
-            if max_project < count:
-                max_project = count
-            project['count'] = count
-            projects.append(project)
-        if not len(projects):
+                    statistic = {
+                        'address' : itr.project.pro_address,
+                        'lat' : float(itr.project.pro_lat) if itr.project.pro_lat else 0.0,
+                        'lng' : float(itr.project.pro_lng) if itr.project.pro_lng else 0.0,
+                        'amount' : itr.amount,
+                        'area' : itr.area,
+                        'number' : itr.number
+                    }
+                    projects_map[itr.project.pro_name] = statistic
+            except Exception, e:
+                return StandardResponse(500, 1, e.message)
+        del result
+        projects = []
+        try:
+            for name, stat in projects_map.items():
+                project = copy.deepcopy(self.project__)
+                project['name'] = name
+                project['address'] = stat['address']
+                project['lat'] = stat['lat']
+                project['lng'] = stat['lng']
+                count = 0.0
+                if param['stattype'][1] == u'amount':
+                    count = stat['amount']
+                elif param['stattype'][1] == u'price':
+                    count = int(stat['amount'] * 10000 / stat['area']) if stat['area'] != 0 else 0
+                elif param['stattype'][1] == u'area':
+                    count = stat['area']
+                elif param['stattype'][1] == u'number':
+                    count = stat['number']
+                if max_project < count:
+                    max_project = count
+                project['count'] = count
+                projects.append(project)
+        except Exception, e:
+            return StandardResponse(500, 1, e.message)
+        if len(projects) == 0:
             return StandardResponse(200, 0, u'Found Nothing')
         result = copy.deepcopy(self.result__)
         result['data'] = projects
@@ -217,11 +207,11 @@ class Project(Resource):
         if not param:
             return StandardResponse(400, 1, u'Invalid Request Parameters')
         filters = self.__GenerateFilters(DatasetAmountModel, param)
-        if not len(filters):
+        if len(filters) == 0:
             return StandardResponse(500, 1, u'SQLAlchemy Error')
         result = None
         try:
-            result = ProjectsModel().query.join(DatasetAmountModel).filter(*filters).all()
+            result = DatasetAmountModel().query.join(ProjectsModel).filter(*filters).all()
         except Exception, e:
             return StandardResponse(500, 1, e.message)
         return self.__ProcessResult(result, param)
@@ -231,11 +221,11 @@ class Project(Resource):
         if not param:
             return StandardResponse(400, 1, u'Invalid Request Parameters')
         filters = self.__GenerateFilters(DatasetPriceModel, param)
-        if not len(filters):
+        if len(filters) == 0:
             return StandardResponse(500, 1, u'SQLAlchemy Error')
         result = None
         try:
-            result = ProjectsModel().query.join(DatasetPriceModel).filter(*filters).all()
+            result = DatasetPriceModel().query.join(ProjectsModel).filter(*filters).all()
         except Exception, e:
             return StandardResponse(500, 1, e.message)
         return self.__ProcessResult(result, param)
@@ -245,11 +235,11 @@ class Project(Resource):
         if not param:
             return StandardResponse(400, 1, u'Invalid Request Parameters')
         filters = self.__GenerateFilters(DatasetAreaModel, param)
-        if not len(filters):
+        if len(filters) == 0:
             return StandardResponse(500, 1, u'SQLAlchemy Error')
         result = None
         try:
-            result = ProjectsModel().query.join(DatasetAreaModel).filter(*filters).all()
+            result = DatasetAreaModel().query.join(ProjectsModel).filter(*filters).all()
         except Exception, e:
             return StandardResponse(500, 1, e.message)
         return self.__ProcessResult(result, param)
@@ -259,11 +249,11 @@ class Project(Resource):
         if not param:
             return StandardResponse(400, 1, u'解析请求参数出错')
         filters = self.__GenerateFilters(DatasetRoomModel, param)
-        if not len(filters):
+        if len(filters) == 0:
             return StandardResponse(500, 1, u'SQLAlchemy Error')
         result = None
         try:
-            result = ProjectsModel().query.join(DatasetRoomModel).filter(*filters).all()
+            result = DatasetRoomModel().query.join(ProjectsModel).filter(*filters).all()
         except Exception, e:
             return StandardResponse(500, 1, e.message)
         return self.__ProcessResult(result, param)
@@ -277,7 +267,7 @@ class Project(Resource):
             return StandardResponse(500, 1, u'SQLAlchemy Error')
         result = None
         try:
-            result = ProjectsModel().query.join(DatasetNoneModel).filter(*filters).all()
+            result = DatasetNoneModel().query.join(ProjectsModel).filter(*filters).all()
         except Exception, e:
             return StandardResponse(500, 1, e.message)
         return self.__ProcessResult(result, param)
