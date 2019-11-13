@@ -11,10 +11,12 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 
-from config import COOKIES
+from config import ACCOUNT_INFO
 from utils import sql_exec, sql_query, get_option, set_option
 
+start_time = time.clock()
 
 def initialize_browser():
     chrome_options = webdriver.ChromeOptions()
@@ -22,13 +24,10 @@ def initialize_browser():
     # chrome_options.add_argument('--headless')  # 增加无界面选项
     # 启动浏览器
     browser = webdriver.Chrome(
-        r'D:\Python37\Scripts\chromedriver.exe', chrome_options=chrome_options)
-    browser.implicitly_wait(3)  # 隐性等待时间3秒
-    browser.get('https://creis.fang.com/')
-    for cookie in COOKIES:
-        browser.add_cookie(cookie)
-    browser.get('https://creis.fang.com/city/PropertyStatistics/Details')
+        r'D:\Python\Python36\Scripts\chromedriver.exe', chrome_options=chrome_options)
     browser.maximize_window()
+    browser.implicitly_wait(3)  # 隐性等待时间3秒
+    
     return browser
 
 
@@ -74,7 +73,8 @@ def handle_click(browser, locator):
         time.sleep(random.randint(1, 3))
         WebDriverWait(browser, 30).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, locator)))
-        browser.find_element_by_css_selector(locator).click()
+        temp_elem = browser.find_element_by_css_selector(locator)
+        ActionChains(browser).move_to_element(temp_elem).click(temp_elem).perform()
     except NoSuchElementException as e:
         logging.exception(e)
         pdb.set_trace()
@@ -89,8 +89,10 @@ def handle_click(browser, locator):
 def handle_input(browser, locator, content):
     try:
         time.sleep(random.randint(1, 3))
-        browser.find_element_by_css_selector(locator).clear()
-        browser.find_element_by_css_selector(locator).send_keys(content)
+        input_elem = browser.find_element_by_css_selector(locator)
+        webdriver.ActionChains(browser).move_to_element(input_elem).perform()
+        input_elem.clear()
+        input_elem.send_keys(content)
     except NoSuchElementException as e:
         logging.exception(e)
         pdb.set_trace()
@@ -98,6 +100,39 @@ def handle_input(browser, locator, content):
         logging.exception(e)
         pdb.set_trace()
 
+def client_login(browser):
+    try:
+        browser.get('https://creis.fang.com/')
+        #输入账号
+        account = browser.find_element_by_css_selector('#cnname')
+        ActionChains(browser).move_to_element(account).click(account).perform()
+        account.send_keys(ACCOUNT_INFO['account'])
+        #输入密码
+        cnotp = browser.find_element_by_css_selector('#cnotp')
+        ActionChains(browser).move_to_element(cnotp).click(cnotp).perform()
+        browser.find_element_by_css_selector('#cnpassword').send_keys(ACCOUNT_INFO['passwd'])
+        #输入令牌
+        token_code = browser.find_element_by_css_selector('#cntempcode')
+        ActionChains(browser).move_to_element(token_code).click(token_code).perform()
+        token_code.send_keys(ACCOUNT_INFO['token'])
+        #选择版本
+        version_opt = browser.find_element_by_css_selector('#cnproductselect')
+        ActionChains(browser).move_to_element(version_opt).click(version_opt).perform()
+        version_elem = browser.find_element_by_css_selector('#cnproductlist > ul > li:nth-child(2) > a')
+        ActionChains(browser).move_to_element(version_elem).click(version_elem).perform()
+        #登陆
+        pdb.set_trace()
+        login_elem = browser.find_element_by_css_selector('#cnloginbtn')
+        ActionChains(browser).move_to_element(login_elem).click(login_elem).perform()
+        #定位到项目页
+        handle_click(browser, '#headerMenu > a:nth-child(2)')
+        pdb.set_trace()
+        handle_click(browser, '#ulLeftMenu > li:nth-child(2) > a')
+        pdb.set_trace()
+        handle_click(browser, '#ulLeftMenu > li:nth-child(2) > dl > dd:nth-child(1) > a')
+    except Exception as e:
+        logging.exception(e)
+        pdb.set_trace()
 
 def prepare_statdata(browser, stattype, startdate, enddate, datetype, arrange=None):
     """
@@ -110,11 +145,16 @@ def prepare_statdata(browser, stattype, startdate, enddate, datetype, arrange=No
         arrange: amount/price/area/room
     :return: None
     """
+    global start_time
+    if time.clock() - start_time > random.randint(2400, 3000):
+        print("sleeping.............................")
+        time.sleep(random.randint(900, 1000))
+        start_time = time.clock()
     #清空输入框，初始化最新查询
     handle_click(browser, '#ulLeftMenu > li:nth-child(2) > dl > dd:nth-child(1) > a')
-    logging.info("begin to sleep 30 seconds!")
-    time.sleep(30)
-    logging.info("end of sleepping 30 seconds!")
+    logging.info("begin to sleep 20-30 seconds!")
+    time.sleep(random.randint(10, 15))
+    logging.info("end of sleepping 20-30 seconds!")
     # 统计类型
     stattype_locator_dict = {
         '成交情况': '#type > li:nth-child(1) > a',
@@ -149,9 +189,13 @@ def prepare_statdata(browser, stattype, startdate, enddate, datetype, arrange=No
                 set_option("arrange_amount_next_interval", next_interval)
 
         arrange_amount(browser, stattype, startdate, datetype, arrange, 0, 40)
-        for interval in range(40, 300, 10):
+        for interval in range(40, 300, 20):
+            if time.clock() - start_time > random.randint(2400, 3000):
+                print("sleeping.............................")
+                time.sleep(random.randint(900, 1000))
+                start_time = time.clock()
             arrange_amount(browser, stattype, startdate,
-                           datetype, arrange, interval, interval + 10)
+                           datetype, arrange, interval, interval + 20)
         arrange_amount(browser, stattype, startdate, datetype, arrange, 300, 0)
     elif arrange == 'price':
         def arrange_price(browser, stattype, startdate, datetype, arrange, interval, next_interval):
@@ -167,9 +211,13 @@ def prepare_statdata(browser, stattype, startdate, enddate, datetype, arrange=No
                 set_option("arrange_price_next_interval", next_interval)
 
         arrange_price(browser, stattype, startdate, datetype, arrange, 0, 6000)
-        for interval in range(6000, 30000, 1000):
+        for interval in range(6000, 30000, 2000):
+            if time.clock() - start_time > random.randint(2400, 3000):
+                print("sleeping.............................")
+                time.sleep(random.randint(900, 1000))
+                start_time = time.clock()
             arrange_price(browser, stattype, startdate, datetype,
-                          arrange, interval, interval + 1000)
+                          arrange, interval, interval + 2000)
         arrange_price(browser, stattype, startdate,
                       datetype, arrange, 30000, 0)
     elif arrange == 'area':
@@ -186,13 +234,21 @@ def prepare_statdata(browser, stattype, startdate, enddate, datetype, arrange=No
                 set_option("arrange_area_next_interval", next_interval)
 
         arrange_area(browser, stattype, startdate, datetype, arrange, 0, 60)
-        for interval in range(60, 180, 10):
+        for interval in range(60, 180, 20):
+            if time.clock() - start_time > random.randint(2400, 3000):
+                print("sleeping.............................")
+                time.sleep(random.randint(900, 1000))
+                start_time = time.clock()
             arrange_area(browser, stattype, startdate,
-                         datetype, arrange, interval, interval + 10)
+                         datetype, arrange, interval, interval + 20)
         arrange_area(browser, stattype, startdate, datetype, arrange, 180, 0)
     elif arrange == 'room':
         # 暂时不支持断点续传
         for item in handle_locator(browser, '#HouseTypeMore > div:nth-child(2)').find_elements_by_tag_name('a'):
+            if time.clock() - start_time > random.randint(2400, 3000):
+                print("sleeping.............................")
+                time.sleep(random.randint(900, 1000))
+                start_time = time.clock()
             interval = handle_attribute(item, 'innerText', 'span > span')
             handle_click(browser, '#HouseTypeOne > em')
             handle_click(
@@ -214,6 +270,7 @@ def statdata_by_properties(browser, stattype, statdate, datetype, arrange, inter
           stattype, statdate, datetype, arrange, interval)
     projects = get_projects()
     table_suffix = arrange if arrange else 'resume'
+    global start_time
     # 清空重复数据
     if arrange:
         sqli = 'DELETE FROM `dataset_%s` WHERE `stattype`="%s" AND `statdate`="%s" AND `datetype`="%s" AND `intervals`="%s"' % (
@@ -224,6 +281,10 @@ def statdata_by_properties(browser, stattype, statdate, datetype, arrange, inter
     sql_exec(sqli)
     # 按物业类型统计
     for item in handle_locator(browser, '#TenementMore > div:nth-child(2)').find_elements_by_tag_name('a'):
+        if time.clock() - start_time > random.randint(2400, 3000):
+            print("sleeping.............................")
+            time.sleep(random.randint(900, 1000))
+            start_time = time.clock()
         properties = handle_attribute(item, 'innerText', 'span > span')
         handle_click(browser, '#TenementOne')
         handle_click(
@@ -268,9 +329,15 @@ def loaddata_by_stattype(browser, stattype):
         if stattype == '成交情况':
             page_content_line.extend(handle_text(
                 browser, '#result > tbody').split('\n')[7:-2])
+            if len(page_content_line) == 0:
+                page_content_line.extend(handle_text(
+                    browser, '#result > tbody').split('\n')[6:-1])
         else:
             page_content_line.extend(handle_text(
                 browser, '#result > tbody').split('\n')[3:-2])
+            if len(page_content_line) == 0:
+                page_content_line.extend(handle_text(
+                    browser, '#result > tbody').split('\n')[2:-1])
         # 翻页
         if u'›' in handle_text(browser, '#listPager'):
             pager_length = len(handle_locator(
@@ -300,6 +367,7 @@ def loading(browser):
         WebDriverWait(browser, 60).until_not(
             EC.presence_of_element_located(locator))
     except TimeoutException as e:
+        pdb.set_trace()
         logging.exception(e)
     finally:
         return

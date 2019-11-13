@@ -7,12 +7,13 @@ import time
 import requests
 
 from config import STATDELTA, STATTYPES
-from spider import prepare_statdata, initialize_browser, close_browser
+from spider import prepare_statdata, initialize_browser, close_browser, client_login
 from utils import get_option, set_option, sql_exec, sql_query
 
 if __name__ == "__main__":
     browser = initialize_browser()
     current_datetime = datetime.datetime.now()
+    client_login(browser)
     # 统计resume_statdate_month
     statdate = datetime.datetime.strptime(
         get_option("resume_statdate_month"), '%Y-%m-%d')
@@ -24,6 +25,7 @@ if __name__ == "__main__":
             startdate = datetime.datetime.strptime(
                 '%s-%s-%s' % (enddate.year, enddate.month, 1), '%Y-%m-%d')
             for stattype in STATTYPES:
+                print("statistic resume month.................")
                 prepare_statdata(browser, stattype, startdate.strftime(
                     '%Y-%m-%d'), enddate.strftime('%Y-%m-%d'), 'month')
         # 更新统计日期
@@ -35,6 +37,7 @@ if __name__ == "__main__":
     for item in range(1, delta.days - STATDELTA):
         statdate_item = statdate + datetime.timedelta(days=item)
         for stattype in STATTYPES[:-1]:  # 按天不统计 可售情况
+            print("statistic resume day.................")
             prepare_statdata(browser, stattype, statdate_item.strftime(
                 '%Y-%m-%d'), statdate_item.strftime('%Y-%m-%d'), 'day')
         # 更新统计日期
@@ -50,6 +53,7 @@ if __name__ == "__main__":
             startdate = datetime.datetime.strptime(
                 '%s-%s-%s' % (enddate.year, enddate.month, 1), '%Y-%m-%d')
             for stattype in STATTYPES[:-1]:
+                print("statistic area.................")
                 prepare_statdata(browser, stattype, startdate.strftime(
                     '%Y-%m-%d'), enddate.strftime('%Y-%m-%d'), 'month', 'area')
         # 更新统计日期
@@ -64,7 +68,8 @@ if __name__ == "__main__":
             enddate = statdate_item - datetime.timedelta(days=1)
             startdate = datetime.datetime.strptime(
                 '%s-%s-%s' % (enddate.year, enddate.month, 1), '%Y-%m-%d')
-            for stattype in STATTYPES:
+            for stattype in STATTYPES:    
+                print("statistic room.................")
                 prepare_statdata(browser, stattype, startdate.strftime(
                     '%Y-%m-%d'), enddate.strftime('%Y-%m-%d'), 'month', 'room')
         # 更新统计日期
@@ -80,6 +85,7 @@ if __name__ == "__main__":
             startdate = datetime.datetime.strptime(
                 '%s-%s-%s' % (enddate.year, enddate.month, 1), '%Y-%m-%d')
             # 仅 成交情况 时统计价格区间
+            print("statistic price.................")
             prepare_statdata(browser, STATTYPES[0], startdate.strftime(
                 '%Y-%m-%d'), enddate.strftime('%Y-%m-%d'), 'month', 'price')
         # 更新统计日期
@@ -96,6 +102,7 @@ if __name__ == "__main__":
             startdate = datetime.datetime.strptime(
                 '%s-%s-%s' % (enddate.year, enddate.month, 1), '%Y-%m-%d')
             # 仅 成交情况 时统计价格区间
+            print("statistic amount.................")
             prepare_statdata(browser, STATTYPES[0], startdate.strftime(
                 '%Y-%m-%d'), enddate.strftime('%Y-%m-%d'), 'month', 'amount')
         # 更新统计日期
